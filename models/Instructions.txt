@@ -1,0 +1,8 @@
+If the models are complete, push the models to this models folder only:
+
+First, Fork the project into your workspace and then push the changes.
+
+The model format should follow this structure:
+-> models (folder)
+---> Model file in .h5 or executable format.
+---> Model code (ensure that the accessibility is hidden).
