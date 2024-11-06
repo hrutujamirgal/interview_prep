@@ -6,6 +6,7 @@ import Subjects from "../components/Subjects";
 import Interview from "../components/Interview"
 import Report from "../components/Report"
 import Features from "../components/Features";
+import CodeAssessment from "../components/CodeAssessment";
 
 
 const Home = () => {
@@ -14,6 +15,7 @@ const Home = () => {
       <div className="overflow-x-hidden">
         <Trailer />
         <Features />
+        <CodeAssessment />
         <Instruction />
         <Subjects />
         <Interview />

@@ -8,8 +8,8 @@ function App() {
     <>
       <UserProvider>
         <InterviewProvider>
-        <Navbar />
-        <Home />
+            <Navbar />
+            <Home />
         </InterviewProvider>
       </UserProvider>
     </>

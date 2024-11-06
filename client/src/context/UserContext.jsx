@@ -9,21 +9,25 @@ const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   // const [user, setUser] = useState();
-  const [cookies, setCookies, removeCookies] = useCookies(
+  const [cookies, setCookies, removeCookie] = useCookies(
     "userData",
     "isLogin", 
     "selectSubject",
   );
-  // const userRoute = immport.meta.env.VITE_ROUTE;
-  // const route = `${userRoute}`
+  const userRoute = import.meta.env.VITE_ROUTE;
+  const route = `${userRoute}`
 
   const login = async (username, password) => {
     try {
-      // const reponse =
-      const data = [username, password];
+      const response = await fetch(`${route}/login`, {
+        method: 'POST',
+        headers:{'Content-Type': 'application/json'},
+        body: JSON.stringify({username, password})
+      })
+      const data = await response.json();
+      console.log(data.user)
       if (data) {
-        //rersponse.ok
-        setCookies("userData", username);
+        setCookies("userData", data.user);
         setCookies("isLogin", true);
         notification.success({
           message: "Login Successful",
@@ -43,22 +47,39 @@ export const UserProvider = ({ children }) => {
 
 
 
-  const logout = ()=>{
-    removeCookies(['userData', 'isLogin', 'selectSubject']);
-    notification.success({
-        message: "Logout Successful",
-      });
-  }
+  const logout = () => {
+      try {
+          Object.keys(cookies).forEach((cookieName) => {
+            if (cookieName) {
+              removeCookie(cookieName);
+            }
+          });
+        notification.success({
+          message: "Logout Successful",
+        }); 
+      } catch (error) {
+        console.log(error)
+        notification.error({
+          message: 'error in logout',
+        });
+      }
+  };
 
 
-
-  const register = (username, password, email,  college)=>{
+  const register = async(username, password, email,  collegeName)=>{
     try{
-        // const response 
-        const data = ["user", "user@gmail.com", "user", "vit"];
-        if(data)     //response.ok
+      const response = await fetch(`${route}/register`, {
+        method: 'POST',
+        headers:{'Content-Type': 'application/json'},
+        body: JSON.stringify({username, password, email,  collegeName})
+      })
+
+      const data = await response.json();
+      console.log(data)
+        if(data)    
         {
-            setCookies('userData', [username, password, email,  college]);
+            setCookies('userData', data.user);
+            setCookies("isLogin", true);
             notification.success({
                 message: "Regitration Successfully",
               });

@@ -1,20 +1,33 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from "react";
-import { Menu, Button, Drawer, Dropdown } from "antd";
+import { Menu, Button, Drawer, Dropdown , notification} from "antd";
 import { useCookies } from "react-cookie";
 import { MenuOutlined } from "@ant-design/icons";
+import { useAuth } from "../context/UserContext";
 import Login from "./Login";
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
   const beforeLogin = ["Login", "SignUp"];
-  const afterLogin = ["Interview", "MCQ", "Profile"];
+  const [cookies] = useCookies(["isLogin", "userData"]);
+  const afterLogin = ["Interview", "MCQ", `${cookies.userData['username']}`];
   const [bar, setBar] = useState([]);
-  const [isHovered, setIsHovered] = useState(false);
-
-  const [cookies] = useCookies(["isLogin"]);
-
+  
   const [scrolled, setScrolled] = useState(false);
+  const {logout} = useAuth()
+
+  const handleLogout = async () => {
+    try {
+      await logout(); 
+    } catch (error) {
+      notification.error({
+        message: "Logout Failed",
+        description: "There was an error while trying to log out.",
+      });
+    }
+  };
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,14 +37,12 @@ const Navbar = () => {
         setScrolled(false);
       }
     };
-
     window.addEventListener("scroll", handleScroll);
-
-    // Cleanup the event listener when the component is unmounted
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
 
   // Menu Items for Dropdowns
   const itemsI = [
@@ -83,18 +94,25 @@ const Navbar = () => {
     },
     {
       label: (
-        <a target="_blank" rel="noopener noreferrer" href="/Logout">
-          Logout
-        </a>
+        <Button
+        color="danger"
+        variant="text"
+        onClick={handleLogout}
+      >
+        Logout
+      </Button>
       ),
       key: "1",
     },
   ];
 
+
+ 
+
   const map = {
     Interview: itemsI,
     MCQ: itemsM,
-    Profile: itemsP,
+    [cookies.userData['username']]: itemsP,
   };
 
   useEffect(() => {
@@ -153,19 +171,13 @@ const Navbar = () => {
                   <Dropdown overlay={<Menu items={map[items]} />}>
                     <Button
                       type="link"
-                      className={`text-xl font-serif ${
-                        isHovered ? "text-white underline" : "text-white"
-                      } ${scrolled ? " text-white" : "text-black"}`}
-                      onMouseEnter={() => setIsHovered(true)}
-                      onMouseLeave={() => setIsHovered(false)}
+                      className={`text-xl font-serif  ${scrolled ? " text-white" : "text-black"} `}
                     >
                       {items}
                     </Button>
                   </Dropdown>
                 ) : (
-                  <Button type="link" className={`text-xl font-serif ${isHovered ? "text-white underline" : "text-white"}`}
-                  onMouseEnter={() => setIsHovered(true)}
-                  onMouseLeave={() => setIsHovered(false)}>{items}</Button>
+                  <Button type="link" className={`text-xl font-serif  ${scrolled ? " text-white" : "text-black"}`}>{items}</Button>
                 )}
               </li>
             ))}
