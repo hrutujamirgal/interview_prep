@@ -4,22 +4,21 @@ from flask_cors import CORS
 import os
 from database import initialize_db
 from routes.user_routes import user_routes
+from routes.get_db_data import get_routes
 
 # Load environment variables from .env file
 load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY')
 
 CORS(app)
-
-app.config['MONGODB_SETTINGS'] = {
-    'host': os.getenv('MONGODB_URI') 
-}
 
 initialize_db(app)
 
 # Register routes
 app.register_blueprint(user_routes)
+app.register_blueprint(get_routes)
 
 @app.route('/')
 def index():

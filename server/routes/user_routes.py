@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 from models import User
 
 user_routes = Blueprint('user_routes', __name__)
@@ -15,6 +15,7 @@ def register():
     user.set_password(data['password'])
     user.save()
     user_dict = user.to_mongo().to_dict()
+    session['user_id'] = str(user_dict['_id'])
     return jsonify({
     'message': "User added successfully",
     'user': {
@@ -30,8 +31,10 @@ def login():
     data = request.json
     user = User.objects(username=data['username']).first()
     if user:
+        
         if user.check_password(data['password']):
             user_dict = user.to_mongo().to_dict()
+            session['user_id'] = str(user_dict['_id'])
             return jsonify({'message':"User logged in successfully", 'user': {'id': str(user_dict['_id']),  
         'username': user_dict['username']}}), 200
         else:
