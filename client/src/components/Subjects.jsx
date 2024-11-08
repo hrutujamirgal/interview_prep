@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { useInterview } from "../context/InterviewContext";
 import { Button } from "antd";
+import { useCookies } from "react-cookie";
+import { useNavigate } from "react-router-dom";
 
 const Subjects = () => {
   const { fetchSubjects } = useInterview();
   const [subject, setSubject] = useState([]);
+  const [, setCookies] = useCookies();
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -18,6 +22,11 @@ const Subjects = () => {
 
     fetchData();
   }, []);
+
+  const handlesubject =(sub)=>{
+      setCookies('topic', sub)
+      navigate("/instruction")
+  }
 
   return (
     <>
@@ -35,6 +44,7 @@ const Subjects = () => {
               </p>
               <Button
                 style={{ alignSelf: "center",  marginTop: 20 }}
+                onClick={()=>handlesubject(sub)}
               >
                 Start Interview
               </Button>

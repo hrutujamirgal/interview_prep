@@ -5,14 +5,14 @@ import {feature} from "../assets/feature";
 const Features = () => {
   return (
     <>
-      <div className="p-10 ">
+      <div className="p-10 h-screen mt-10">
         <p className="font-serif text-center text-3xl md:text-4xl lg:text-5xl m-5">
           Features
         </p>
-        <Carousel autoplay >
+        <Carousel autoplay  className="mt-10">
           {feature.map((obj, indx) => (
             <div key={indx}>
-              <div className="h-72 flex flex-row">
+              <div className="h-96 flex flex-row">
                 <img src={obj.img} className="w-1/2" />
                 <div className="p-10 bg-submain w-full">
                   <p className="font-serif text-2xl md:text-3xl lg:text-4xl ">
