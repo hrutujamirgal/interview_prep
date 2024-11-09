@@ -5,6 +5,7 @@ import os
 from database import initialize_db
 from routes.user_routes import user_routes
 from routes.get_db_data import get_routes
+from routes.interview_routes import interview_route
 
 # Load environment variables from .env file
 load_dotenv()
@@ -19,6 +20,7 @@ initialize_db(app)
 # Register routes
 app.register_blueprint(user_routes)
 app.register_blueprint(get_routes)
+app.register_blueprint(interview_route)
 
 @app.route('/')
 def index():
