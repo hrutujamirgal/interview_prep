@@ -1,13 +1,19 @@
 /* eslint-disable no-unused-vars */
 import { Button } from "antd";
 import { useRef, useEffect, useState } from "react";
-
+import { useNavigate } from "react-router-dom";
+ 
 const Interview = () => {
   const videoRef = useRef(null);
   const [answer, setAnswer] = useState(false);
   const [question, setQuestion] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [askedQuestion , setAskedQuestion] = useState(0); 
+  const navigate = useNavigate()
+
+  useEffect(()=>{
+    goFullScreen()
+  },[])
 
   const handleAnswer = () => {
     setAnswer(!answer);
@@ -20,9 +26,9 @@ const Interview = () => {
       stopWebcam();
     }
 
-    // if(askedQuestion === 5){
-    //     Navigate(to report )
-    // }
+    if(askedQuestion === 5){
+        navigate("/report")
+    }
   };
 
   const goFullScreen = () => {

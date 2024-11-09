@@ -11,6 +11,7 @@ export const InterviewProvider = ({ children }) => {
   const [subject, setSubject] = useState([]);
   const [question, setQuestion] = useState([]);
   const [cookies, setCookies, removeCookies] = useCookies(['selectSubject']);
+  const route = import.meta.env.VITE_ROUTE
 
   const selectSubject = (sub) => {
     setCookies('selectSubject', sub);
@@ -38,11 +39,11 @@ export const InterviewProvider = ({ children }) => {
 
   const fetchSubjects = async () => {
     try {
-      // const response = await fetch(`${route}/subjects`, { method: "GET" });
-      const data = ['Subject A','Subject A','Subject A','Subject A','Subject A','Subject A','Subject A','Subject A','Subject A','Subject A','Subject A','Subject A','Subject A','Subject A','Subject A']; // Placeholder
+      const response = await fetch(`${route}/get_subjects`, { method: "GET" });
+      const data = await response.json()
       if (data) { 
-        setSubject(data);
-        return data;
+        setSubject(data.subjects);
+        return data.subjects;
       } else {
         notification.error({
           message: "Fetching subject Failed!",
