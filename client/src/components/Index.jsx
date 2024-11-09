@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+
 import { Button } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useCookies } from 'react-cookie'

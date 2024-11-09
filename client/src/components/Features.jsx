@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+
 import { Carousel } from "antd";
 import {feature} from "../assets/feature";
 

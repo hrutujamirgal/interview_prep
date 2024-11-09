@@ -7,6 +7,8 @@ import Interview from "./components/Interview";
 import Report from "./components/Report";
 import CodeAssessment from "./components/CodeAssessment";
 import Index from "./components/Index";
+import MCQ from "./components/MCQ"
+import Test from "./components/Test"
 
 import { UserProvider } from "./context/UserContext";
 import { InterviewProvider } from "./context/InterviewContext";
@@ -29,6 +31,8 @@ function App() {
             <Route path="/subjects" element={<Subjects />} />
             <Route path="/interview" element={<Interview />} />
             <Route path="/report" element={<Report />} />
+            <Route path="/mcq" element={<MCQ />} />
+            <Route path="/test" element={<Test />} />
           </Routes>
         </InterviewProvider>
       </UserProvider>
@@ -41,7 +45,7 @@ function LocationWrapper() {
 
   return (
     <>
-      {location.pathname !== "/interview" && <Navbar />}
+      { (location.pathname !== "/interview" && location.pathname !== "/test") && <Navbar />}
     </>
   );
 }

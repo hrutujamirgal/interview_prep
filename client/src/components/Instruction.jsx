@@ -25,7 +25,7 @@ const Instruction = () => {
         <div className="flex flex-row h-full overflow-y-scroll overflow-x-hidden w-screen">
           <div className="bg-submain w-1/3">
             <p className="text-center mt-52 font-serif text-xl md:text-2xl lg:text-3xl font-bold p-5">
-              Let's Prepare For - {cookies['topic'] || "Your Topic"}
+              Let's Prepare For - {cookies['topic'][0] || "Your Topic"}
             </p>
           </div>
           <div className="info bg-last w-2/3  overflow-y-scroll">
