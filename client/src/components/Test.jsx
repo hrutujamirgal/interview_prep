@@ -71,7 +71,7 @@ const Test = () => {
       message: `Quiz Completed!`,
       description: `You scored ${correctAnswers} out of ${questions.length}.`,
     });
-    navigate("/results");
+    navigate("/report");
   };
 
   const formatTime = (time) => {
