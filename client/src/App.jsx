@@ -8,8 +8,8 @@ import Interview from "./components/Interview";
 import Report from "./components/Report";
 import CodeAssessment from "./components/CodeAssessment";
 import Index from "./components/Index";
-import MCQ from "./components/MCQ"
-import Test from "./components/Test"
+import MCQ from "./components/MCQ";
+import Test from "./components/Test";
 
 
 import { UserProvider } from "./context/UserContext";

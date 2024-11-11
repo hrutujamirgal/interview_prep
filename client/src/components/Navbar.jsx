@@ -26,7 +26,7 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      notification.success({ message: "Logged out successfully" });
+      navigate("/");
     } catch (error) {
       notification.error({
         message: "Logout Failed",

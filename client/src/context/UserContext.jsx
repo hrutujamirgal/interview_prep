@@ -57,6 +57,7 @@ export const UserProvider = ({ children }) => {
         notification.success({
           message: "Logout Successful",
         }); 
+        
       } catch (error) {
         console.log(error)
         notification.error({
