@@ -25,7 +25,6 @@ export const UserProvider = ({ children }) => {
         body: JSON.stringify({username, password})
       })
       const data = await response.json();
-      console.log(data.user)
       if (data) {
         setCookies("userData", data.user);
         setCookies("isLogin", true);
@@ -76,7 +75,6 @@ export const UserProvider = ({ children }) => {
       })
 
       const data = await response.json();
-      console.log(data)
         if(data)    
         {
             setCookies('userData', data.user);

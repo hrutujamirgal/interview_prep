@@ -14,7 +14,7 @@ const Navbar = () => {
   const [visible, setVisible] = useState(false);
   const beforeLogin = ["Login", "SignUp"];
   const [subject, setSubject] = useState([]);
-  const [cookies, setCookies] = useCookies(["isLogin", "userData"]);
+  const [cookies, setCookies] = useCookies(["isLogin", "userData", "component"]);
   const afterLogin = ["Home", "Interview", "MCQ", `${cookies.userData?.username || "User"}`];
   const [bar, setBar] = useState([]);
   const [scrolled, setScrolled] = useState(false);
@@ -70,6 +70,7 @@ const Navbar = () => {
   }, []); 
 
   const handlemcq = (item)=>{
+     setCookies('component', 'mcq')
      setCookies('mcq_topic', item),
      navigate("/mcq")
   }
