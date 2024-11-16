@@ -37,7 +37,7 @@ class MCQModel(Document):
     selectedTopic = StringField(required=True, max_length=50)
     date = DateTimeField(default=datetime.utcnow)
     score = IntField(min_value=0)
-    report = FileField(required=True) 
+    report = StringField(required=True) 
 
 
 # (Interview modle)

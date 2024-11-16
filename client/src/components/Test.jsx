@@ -1,35 +1,59 @@
-/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { Button, Radio, notification } from "antd";
 import { useNavigate } from "react-router-dom";
+import { useComponent } from "../context/ComponentContext";
+import { useCookies } from "react-cookie";
 
 const Test = () => {
-  const [time, setTime] = useState(30 * 60); // 30 minutes in seconds
+  const [cookies] = useCookies('mcq_topic');
+  const [time, setTime] = useState(30 * 60); 
   const [selectedOptions, setSelectedOptions] = useState([]);
-  const [report, setReport] = useState([]);
-  const [questions] = useState([
-    {
-      question: "What is the capital of France?",
-      options: ["Paris", "London", "Berlin", "Madrid"],
-      answer: "Paris",
-    },
-    {
-      question: "Which language is used for web development?",
-      options: ["Python", "C++", "JavaScript", "Java"],
-      answer: "JavaScript",
-    },
-    // Add more questions here
-  ]);
+  const [questions, setQuestions] = useState([]);
   const navigate = useNavigate();
+  const { fetchMcQ, submit_mcq } = useComponent();
 
   const goFullScreen = () => {
     const elem = document.documentElement;
-    if (elem.requestFullscreen) elem.requestFullscreen();
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.mozRequestFullScreen) {
+      elem.mozRequestFullScreen();
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+      elem.msRequestFullscreen();
+    }
+  };
+
+  const exitFullScreen = () => {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    }
+  };
+  
+
+  const getQuestion = async () => {
+    try {
+      const mcq = await fetchMcQ(cookies.mcq_topic.subject);
+      setQuestions(mcq);
+    } catch (e) {
+      console.log("Error occurred in fetching MCQ questions", e);
+    }
   };
 
   useEffect(() => {
+    getQuestion();
     goFullScreen();
-  }, []);
+  }, [cookies.mcq_topic]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -44,7 +68,7 @@ const Test = () => {
       });
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => clearInterval(timer); // Cleanup on unmount
   }, [navigate]);
 
   const handleOptionChange = (index, value) => {
@@ -53,24 +77,23 @@ const Test = () => {
     setSelectedOptions(updatedOptions);
   };
 
-  const handleSubmitQuiz = () => {
+  const handleSubmitQuiz = async () => {
     const newReport = questions.map((question, index) => ({
-      question: question.question,
+      question: question.question_text,
       options: question.options,
-      answer: question.answer,
+      answer: question.correct_answer,
       selected_option: selectedOptions[index],
     }));
+
     
-    setReport(newReport);
 
-    const correctAnswers = newReport.reduce((score, entry) => 
-      score + (entry.selected_option === entry.answer ? 1 : 0), 0
-    );
-
-    notification.info({
-      message: `Quiz Completed!`,
-      description: `You scored ${correctAnswers} out of ${questions.length}.`,
+    await submit_mcq({
+      user_id: cookies.userData.id,
+      selectedTopic: cookies.mcq_topic.subject,
+      questions: newReport,
     });
+
+    exitFullScreen();
     navigate("/report");
   };
 
@@ -89,7 +112,7 @@ const Test = () => {
       {questions.map((question, index) => (
         <div key={index} className="mb-5 m-10">
           <p className="text-2xl font-semibold mb-3">
-            {index + 1}. {question.question}
+            {index + 1}. {question.question_text}
           </p>
           <Radio.Group
             onChange={(e) => handleOptionChange(index, e.target.value)}
@@ -110,7 +133,7 @@ const Test = () => {
           type="primary"
           onClick={handleSubmitQuiz}
           disabled={selectedOptions.length !== questions.length}
-          className="w-40 mt-5 items-end"
+          className="w-40 mt-5"
         >
           Submit Quiz
         </Button>
