@@ -6,6 +6,9 @@ from fpdf import FPDF
 from mongoengine import Document, StringField, ReferenceField, DateTimeField, IntField, FileField
 from datetime import datetime
 import base64
+from bson import ObjectId
+from reportlab.pdfgen import canvas
+import os
 
 
 interview_route = Blueprint('interview_route', __name__)
@@ -35,87 +38,98 @@ def login_required(f):
 # def analyze_quetion():
 #     return "get the video , extract the audio, text to speech, video confidence analysis, for of the report"
 
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from flask import send_file, request, jsonify
+from bson import ObjectId
+from datetime import datetime
+import os
 
+def create_pdf_with_reportlab(data, file_path):
+    # Create the PDF and save it to the specified file path
+    p = canvas.Canvas(file_path)
 
+    # Title
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(200, 800, "MCQ Test Report")
 
-class PDF(FPDF):
-    def header(self):
-        self.set_font("Arial", "B", 12)
-        self.cell(0, 10, "MCQ Test Report", 0, 1, "C")
+    y_position = 750
+    p.setFont("Helvetica", 12)
+    score = 0 
 
-    def add_question(self, question_data):
-        self.set_font("Arial", "", 12)
-        self.cell(0, 10, f"Question: {question_data['question']}", 0, 1)
+    for question_data in data:
+        p.drawString(50, y_position, f"Question: {question_data['question']}")
+        y_position -= 20
         for option in question_data["options"]:
-            self.cell(0, 10, f"Option: {option}", 0, 1)
-        self.cell(0, 10, f"Answer: {question_data['answer']}", 0, 1)
-        self.cell(0, 10, f"Selected Option: {question_data['selected_option']}", 0, 1)
-        self.ln(5)
+            p.drawString(70, y_position, f"Option: {option}")
+            y_position -= 20
+        # Print answer and selected option
+        p.drawString(50, y_position, f"Answer: {question_data['answer']}")
+        y_position -= 20
+        p.drawString(50, y_position, f"Selected Option: {question_data['selected_option']}")
+        y_position -= 20
+        # Calculate and print score for each question
+        question_score = 1 if question_data['selected_option'] == question_data['answer'] else 0
+        score += question_score
+        p.drawString(50, y_position, f"Score: {question_score}")
+        y_position -= 30  # Extra space between questions
+
+        if y_position < 50:  # Start a new page if we reach the bottom
+            p.showPage()
+            y_position = 750
+
+    # Print total score at the end
+    p.drawString(50, y_position, f"Total Score: {score}")
+
+    # Finish up the PDF
+    p.showPage()
+    p.save()
+    return score
 
 
 @interview_route.route('/get_mcq_report', methods=['POST'])
-@login_required
+# @login_required
 def get_mcq_report():
-    data = request.json
-    
-    # Extract data
-    user_id = data.get("userId")
-    selected_topic = data.get("selectedTopic")
-    score = data.get("score")
-    questions = data.get("questions")
-    
-    # Verify user
-    user = User.objects(id=user_id).first()
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    
-    # Create PDF
-    pdf = PDF()
-    pdf.add_page()
-    for question_data in questions.values():
-        pdf.add_question(question_data)
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        selected_topic = data.get('selectedTopic')
+        questions = data.get('questions')
 
-    # Save PDF to a buffer
-    pdf_buffer = BytesIO()
-    pdf.output(pdf_buffer)
-    pdf_buffer.seek(0)
+        # Convert user_id to ObjectId
+        try:
+            user_id = ObjectId(user_id)
+        except Exception:
+            return jsonify({"error": "Invalid user_id format"}), 400
 
-    # Save PDF as base64 for MongoDB
-    pdf_base64 = base64.b64encode(pdf_buffer.read()).decode("utf-8")
-    pdf_buffer.seek(0) 
+        user = User.objects(id=user_id).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
 
-    # Save to MongoDB
-    mcq_instance = MCQModel(
-        userId=user,
-        selectedTopic=selected_topic,
-        score=score,
-        report=pdf_base64
-    )
-    mcq_instance.save()
+        # Define file path for the PDF
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        pdf_filename = f"mcq_report_{user_id}_{timestamp}.pdf"
+        file_path = os.path.join("reports", pdf_filename)
 
-    # Send PDF to frontend
-    response = make_response(pdf_buffer.read())
-    response.headers.set('Content-Disposition', 'attachment', filename='mcq_report.pdf')
-    response.headers.set('Content-Type', 'application/pdf')
+        # Ensure the "reports" directory exists
+        os.makedirs("reports", exist_ok=True)
 
-    return response
+        # Create the PDF and save it to the file path
+        score = create_pdf_with_reportlab(questions, file_path)
+
+        # Store the file path in MongoDB (not the PDF content itself)
+        mcq_instance = MCQModel(
+            userId=user,
+            selectedTopic=selected_topic,
+            score=score,
+            report=file_path  # Save the file path in MongoDB
+        )
+        mcq_instance.save()
+
+        # Send the PDF file as a downloadable attachment
+        return send_file(file_path, as_attachment=True, download_name='mcq_report.pdf')
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
-
-@interview_route.route('/download_mcq_report/<report_id>', methods=['GET'])
-@login_required
-def download_mcq_report(report_id):
-    mcq_instance = MCQModel.objects(id=report_id).first()
-    if not mcq_instance or not mcq_instance.report:
-        return jsonify({"error": "Report not found"}), 404
-
-    # Decode the base64 PDF data
-    pdf_data = base64.b64decode(mcq_instance.report)
-    pdf_buffer = BytesIO(pdf_data)
-
-    # Send PDF to frontend
-    response = make_response(pdf_buffer.read())
-    response.headers.set('Content-Disposition', 'attachment', filename='mcq_report.pdf')
-    response.headers.set('Content-Type', 'application/pdf')
-
-    return response

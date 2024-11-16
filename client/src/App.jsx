@@ -14,6 +14,7 @@ import Test from "./components/Test";
 
 import { UserProvider } from "./context/UserContext";
 import { InterviewProvider } from "./context/InterviewContext";
+import { ComponentProvider } from "./context/ComponentContext";
 
 import { useCookies } from "react-cookie";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
@@ -25,6 +26,7 @@ function App() {
     <Router> 
       <UserProvider>
         <InterviewProvider>
+          <ComponentProvider>
           <LocationWrapper />
           <Routes>
             <Route path="/" element={cookies.isLogin ? <Index /> : <Home />} />
@@ -36,6 +38,7 @@ function App() {
             <Route path="/mcq" element={<MCQ />} />
             <Route path="/test" element={<Test />} />
           </Routes>
+          </ComponentProvider>
         </InterviewProvider>
       </UserProvider>
     </Router>
