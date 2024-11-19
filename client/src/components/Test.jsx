@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { Button, Radio, notification } from "antd";
@@ -61,7 +62,7 @@ const Test = () => {
         if (prevTime <= 0) {
           clearInterval(timer);
           notification.warning({ message: "Time's up!" });
-          navigate("/report");
+          navigate("/feedback");
           return 0;
         }
         return prevTime - 1;
@@ -94,7 +95,7 @@ const Test = () => {
     });
 
     exitFullScreen();
-    navigate("/report");
+    navigate("/feedback");
   };
 
   const formatTime = (time) => {

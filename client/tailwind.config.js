@@ -16,7 +16,9 @@ export default {
       submain:"#C2EDCE",
       last:"#F6F6F2",
       black:"#000000",
-      mid:"#badfe7"
+      mid:"#badfe7",
+      green:"#00ff00",
+      red:"#ff0000",
     },
     extend: {
       boxShadow: {

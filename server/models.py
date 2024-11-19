@@ -44,5 +44,6 @@ class MCQModel(Document):
 class CodingModel(Document):
     userId = ReferenceField(User, required=True)
     date = DateTimeField(default=datetime.utcnow)
-    report = FileField(required=True) 
+    score = IntField(min_value=0)
+    report = StringField(required=True) 
 

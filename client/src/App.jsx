@@ -10,7 +10,9 @@ import CodeAssessment from "./components/CodeAssessment";
 import Index from "./components/Index";
 import MCQ from "./components/MCQ";
 import Test from "./components/Test";
-
+import FeedBack from "./components/FeedBack";
+import CodeInstruction from "./components/CodeIntruction";
+ 
 
 import { UserProvider } from "./context/UserContext";
 import { InterviewProvider } from "./context/InterviewContext";
@@ -37,6 +39,8 @@ function App() {
             <Route path="/report" element={<Report />} />
             <Route path="/mcq" element={<MCQ />} />
             <Route path="/test" element={<Test />} />
+            <Route path="/feedback" element={<FeedBack />} />
+            <Route path="/codeInstruction" element={<CodeInstruction />} />
           </Routes>
           </ComponentProvider>
         </InterviewProvider>
@@ -50,7 +54,7 @@ function LocationWrapper() {
 
   return (
     <>
-      { (location.pathname !== "/interview" && location.pathname !== "/test") && <Navbar />}
+      { (location.pathname !== "/interview" && location.pathname !== "/test" && location.pathname !== "/coding") && <Navbar />}
     </>
   );
 }
