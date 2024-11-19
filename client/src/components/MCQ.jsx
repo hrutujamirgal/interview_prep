@@ -5,7 +5,7 @@ import { useCookies } from "react-cookie";
 import { useNavigate } from "react-router-dom";
 
 const MCQ = () => {
-  const [cookies, setCookies] = useCookies(['mcq_topic']);
+  const [cookies, setCookie] = useCookies(['mcq_topic']);
   const [topic, setTopic] = useState(""); 
   const navigate = useNavigate();
 

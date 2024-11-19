@@ -1,5 +1,5 @@
 __pycache__
-*.pyc
+routes/__pycache__
 env/
 .env
 reports
