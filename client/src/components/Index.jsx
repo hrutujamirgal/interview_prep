@@ -29,8 +29,8 @@ const Index = ()=>{
 
     return(<>
     <div className="overflow-x-hidden">
-    <div className="bg-submain h-15 p-5  m-10">
-        <p className="font-serif text-xl md:text-2xl lg:text-3xl font-bold">Hello, { cookies.userData['username']}</p>
+    <div className=" h-15 p-5  m-10">
+        <p className="font-serif text-xl md:text-2xl lg:text-3xl font-bold capitalize">Hello, { cookies.userData['username']}</p>
     </div>
         <div className="m-20 bg-paleBlue p-5 rounded-md flex flex-row">
             <div className="w-96">

@@ -37,7 +37,7 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      setScrolled(window.scrollY > 150);
     };
     window.addEventListener("scroll", handleScroll);
     return () => {
@@ -66,8 +66,11 @@ const Navbar = () => {
       }
     };
 
-    fetchData();
-  }, []); 
+    if(cookies.isLogin){
+      fetchData();
+    }
+    
+  }, [cookies.isLogin]); 
 
   const handlemcq = (item)=>{
      setCookies('component', 'mcq')
@@ -89,21 +92,24 @@ const Navbar = () => {
   ];
 
   const itemsP = [
-    { label: <a href="/Report">Report</a>, key: "0" },
+
+    { label: <Link to="/codeInstruction">Coding Practice</Link>, key: "0" },
+    { label: <Link to="/report">Report</Link>, key: "1" },
+
     {
       label: (
         <Button type="text" onClick={handleLogout} danger>
           Logout
         </Button>
       ),
-      key: "1",
+      key: "2",
     },
   ];
 
   // Directly add Home link to the dropdownItems
   const dropdownItems = {
     Home: [
-      { label: <Link to="/">Home</Link>, key: "0" }, // Home link here
+      { label: <Link to="/">Home</Link>, key: "0" }, 
     ],
     Interview: itemsI,
     MCQ: itemsM,
@@ -139,7 +145,7 @@ const Navbar = () => {
             <li className="px-2" key={item}>
               {dropdownItems[item] ? (
                 <Dropdown overlay={<Menu items={dropdownItems[item]} />}>
-                  <Button type="link" className={`${scrolled ? "text-white" : "text-black"}`}>
+                  <Button type="link" className={` capitalize ${scrolled ? "text-white" : "text-black"}`}>
                     {item}
                   </Button>
                 </Dropdown>

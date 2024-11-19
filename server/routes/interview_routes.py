@@ -1,15 +1,13 @@
-from models import User , MCQModel
+from models import User , MCQModel, CodingModel, Interview
 from flask import jsonify, request, send_file, make_response, Blueprint,  session
 from functools import wraps
 from io import BytesIO
 from fpdf import FPDF
 from mongoengine import Document, StringField, ReferenceField, DateTimeField, IntField, FileField
 from datetime import datetime
-import base64
 from bson import ObjectId
 from reportlab.pdfgen import canvas
 import os
-
 
 interview_route = Blueprint('interview_route', __name__)
 
@@ -38,12 +36,7 @@ def login_required(f):
 # def analyze_quetion():
 #     return "get the video , extract the audio, text to speech, video confidence analysis, for of the report"
 
-from io import BytesIO
-from reportlab.pdfgen import canvas
-from flask import send_file, request, jsonify
-from bson import ObjectId
-from datetime import datetime
-import os
+
 
 def create_pdf_with_reportlab(data, file_path):
     # Create the PDF and save it to the specified file path
@@ -109,10 +102,10 @@ def get_mcq_report():
         # Define file path for the PDF
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         pdf_filename = f"mcq_report_{user_id}_{timestamp}.pdf"
-        file_path = os.path.join("reports", pdf_filename)
+        file_path = os.path.join("reports/mcq", pdf_filename)
 
         # Ensure the "reports" directory exists
-        os.makedirs("reports", exist_ok=True)
+        os.makedirs("reports/mcq", exist_ok=True)
 
         # Create the PDF and save it to the file path
         score = create_pdf_with_reportlab(questions, file_path)
@@ -133,3 +126,105 @@ def get_mcq_report():
         return jsonify({"error": str(e)}), 500
 
 
+
+
+def create_pdf_with_reportlab_coding(data, file_path):
+    # Create the PDF and save it to the specified file path
+    p = canvas.Canvas(file_path)
+
+    # Title
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(200, 800, "coding Test Report")
+
+    y_position = 750
+    p.setFont("Helvetica", 12)
+    score = 0 
+    index = 0
+
+    for question_data in data:
+        p.drawString(50, y_position, f"Question: {question_data['title']}")
+        y_position -= 20
+        p.drawString(50, y_position, f"Description: {question_data['description']}")
+        y_position -= 20
+        p.drawString(50, y_position, f"Code:")
+        code_snippet = question_data['code']
+        lines = code_snippet.splitlines()
+        y_position -= 20  
+        line_height = 11
+
+        for line in lines:
+            p.drawString(50, y_position, line)  
+            y_position -= line_height  
+
+        y_position -= 20
+        
+        p.drawString(50, y_position, f"Test cases Passes: {question_data['totalPassed']}")
+        y_position -= 20
+        p.drawString(50, y_position, f"Total Test Pass: {question_data['totalTests']}")
+        y_position -= 20
+        # Calculate and print score for each question
+        question_score = (question_data['totalPassed'] / question_data['totalTests'])
+        score += question_score
+        p.drawString(50, y_position, f"Score: {question_score}")
+        y_position -= 30  # Extra space between questions
+        index+=1
+
+        if y_position < 50:  # Start a new page if we reach the bottom
+            p.showPage()
+            y_position = 750
+
+    score /= index
+    score *= 10 
+    # Print total score at the end
+    p.drawString(50, y_position, f"Total Score: {score}")
+    # Finish up the PDF
+    p.showPage()
+    p.save()
+    return score
+
+
+@interview_route.route('/get_coding_report', methods=['POST'])
+# @login_required
+def get_coding_report():
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        questions = data.get('questions')
+        print(user_id)
+
+        # Convert user_id to ObjectId
+        try:
+            user_id = ObjectId(user_id)
+        except Exception:
+            return jsonify({"error": "Invalid user_id format"}), 400
+
+        user = User.objects(id=user_id).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Define file path for the PDF
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        pdf_filename = f"coding_report_{user_id}_{timestamp}.pdf"
+        file_path = os.path.join("reports/coding", pdf_filename)
+
+        # Ensure the "reports" directory exists
+        os.makedirs("reports/coding", exist_ok=True)
+        print("till here ok")
+
+        # Create the PDF and save it to the file path
+        score = create_pdf_with_reportlab_coding(questions, file_path)
+        print(score)
+
+        # Store the file path in MongoDB (not the PDF content itself)
+        coding_instance = CodingModel(
+            userId=user,
+            score=score,
+            report=file_path  
+        )
+        coding_instance.save()
+
+        # Send the PDF file as a downloadable attachment
+        return send_file(file_path, as_attachment=True, download_name='coding_report.pdf')
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

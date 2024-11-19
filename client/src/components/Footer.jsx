@@ -1,9 +1,6 @@
-import { purple } from "@ant-design/colors";
-import { Rate, Input, Button } from "antd";
 import { titles } from "../assets/feature";
 
 const Footer = () => {
-  const { TextArea } = Input;
 
   const footerList = {
     Product: ["Interview Prep", "Using AI", "Personall feedback"],
@@ -21,29 +18,7 @@ const Footer = () => {
             <p className="text-sm md:text-lg lg:text-xl">
               Practice the Mock Interview to Ace the Real One.
             </p>
-            <div className="feedback flex flex-col  py-5">
-              <p className="text-sm md:text-lg lg:text-xl font-mono">Rate Us</p>
-              <Rate
-                allowHalf
-                defaultValue={0}
-                className="text-main"
-                style={{
-                  borderColor: "white",
-                  filter: "brightness(120%)",
-                  fontSize: "24px",
-                  opacity: 0.9,
-                }}
-              />
-              <span>
-                <TextArea
-                  rows={4}
-                  maxLength={100}
-                  placeholder="Share Expirience"
-                  style={{ borderColor: purple }}
-                />
-              </span>
-              <Button className="p-2 mt-5">Submit</Button>
-            </div>
+            
           </div>
         </div>
 

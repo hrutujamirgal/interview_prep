@@ -1,22 +1,24 @@
 /* eslint-disable react/no-unescaped-entities */
 import { useState } from "react";
-import instructionSet from "../assets/instructionSet";
+import CodeInstructionSet from "../assets/CodeInstructionSet";
 import { Checkbox, Button } from "antd";
-import { useCookies } from "react-cookie";
 import { useNavigate } from "react-router-dom";
+import { useCookies } from "react-cookie";
 
-const Instruction = () => {
-  const { introduction, consent, steps } = instructionSet;
+const CodeInstruction = () => {
+  const { introduction, consent, steps } = CodeInstructionSet;
   const [checked, setChecked] = useState(false);
-  const [cookies] = useCookies();
   const navigate = useNavigate()
+
+  const [, setCookie] = useCookies()
 
   const handleChecked = (e) => {
     setChecked(e.target.checked);
   };
 
   const handleSubmit = ()=>{
-    navigate("/interview")
+    setCookie('component', 'coding') 
+    navigate("/coding")
   } 
 
   return (
@@ -25,7 +27,7 @@ const Instruction = () => {
         <div className="flex flex-row h-full overflow-y-scroll overflow-x-hidden w-screen">
           <div className="bg-submain w-1/3">
             <p className="text-center mt-52 font-serif text-xl md:text-2xl lg:text-3xl font-bold p-5">
-              Let's Prepare For - {cookies['topic'][0] || "Your Topic"}
+              Let's Prepare For Interview Format Coding Round
             </p>
           </div>
           <div className="info bg-last w-2/3  overflow-y-scroll">
@@ -76,4 +78,4 @@ const Instruction = () => {
   );
 };
 
-export default Instruction;
+export default CodeInstruction;
