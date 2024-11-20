@@ -227,7 +227,8 @@ const Report = () => {
           </>
         )}
 
-        <div className="p-5">
+        <div className="p-5 w-2/3 text-2xl">
+        <p className="text-2xl font-serif">Select the Report Type</p>
           <Select
             placeholder="Select Report Type"
             style={{ width: 200 }}

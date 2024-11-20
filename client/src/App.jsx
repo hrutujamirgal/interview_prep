@@ -12,6 +12,7 @@ import MCQ from "./components/MCQ";
 import Test from "./components/Test";
 import FeedBack from "./components/FeedBack";
 import CodeInstruction from "./components/CodeIntruction";
+import McqSubjects from "./components/McqSubjects";
  
 
 import { UserProvider } from "./context/UserContext";
@@ -35,6 +36,7 @@ function App() {
             <Route path="/instruction" element={<Instruction />} />
             <Route path="/coding" element={<CodeAssessment />} />
             <Route path="/subjects" element={<Subjects />} />
+            <Route path="/mcq-subjects" element={<McqSubjects />} />
             <Route path="/interview" element={<Interview />} />
             <Route path="/report" element={<Report />} />
             <Route path="/mcq" element={<MCQ />} />

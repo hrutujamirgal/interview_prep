@@ -7,19 +7,16 @@ import { MenuOutlined } from "@ant-design/icons";
 import { useAuth } from "../context/UserContext";
 import { Link } from 'react-router-dom';
 import Login from "./Login";
-import { useInterview } from "../context/InterviewContext";
 import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
   const beforeLogin = ["Login", "SignUp"];
-  const [subject, setSubject] = useState([]);
   const [cookies, setCookies] = useCookies(["isLogin", "userData", "component"]);
-  const afterLogin = ["Home", "Interview", "MCQ", `${cookies.userData?.username || "User"}`];
+  const afterLogin = ["Home", "Interview", "Assessment", `${cookies.userData?.username || "User"}`];
   const [bar, setBar] = useState([]);
   const [scrolled, setScrolled] = useState(false);
   const { logout } = useAuth();
-  const { fetchSubjects } = useInterview();
 
   const navigate = useNavigate()
 
@@ -46,31 +43,7 @@ const Navbar = () => {
   }, []);
 
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const subjectsResponse = await fetchSubjects();
-
-        if (subjectsResponse && typeof subjectsResponse === 'object') {
-          const subjectsArray = Object.entries(subjectsResponse).map(([key, value]) => ({
-            _id: value._id, 
-            subject: value.subject 
-          }));
-
-          setSubject(subjectsArray); 
-        } else {
-          console.error('Subjects data is not in the expected format:', subjectsResponse);
-        }
-      } catch (error) {
-        console.error("Failed to fetch subjects:", error);
-      }
-    };
-
-    if(cookies.isLogin){
-      fetchData();
-    }
-    
-  }, [cookies.isLogin]); 
+   
 
   const handlemcq = (item)=>{
      setCookies('component', 'mcq')
@@ -85,16 +58,14 @@ const Navbar = () => {
   ];
 
   const itemsM = [
-    ...subject.map((item, index) => ({
-      label: <button onClick={()=> handlemcq(item)}>{item.subject}</button>,
-      key: index.toString(),
-    })),
+    { label: <Link to="/mcq-subjects">MCQ Practice</Link>, key: "0" },
+
+    { label: <Link to="/codeInstruction">Coding Practice</Link>, key: "1" },
   ];
 
   const itemsP = [
 
-    { label: <Link to="/codeInstruction">Coding Practice</Link>, key: "0" },
-    { label: <Link to="/report">Report</Link>, key: "1" },
+    { label: <Link to="/report">Report</Link>, key: "0" },
 
     {
       label: (
@@ -102,7 +73,7 @@ const Navbar = () => {
           Logout
         </Button>
       ),
-      key: "2",
+      key: "1",
     },
   ];
 
@@ -112,7 +83,7 @@ const Navbar = () => {
       { label: <Link to="/">Home</Link>, key: "0" }, 
     ],
     Interview: itemsI,
-    MCQ: itemsM,
+    Assessment: itemsM,
     [cookies.userData?.username]: itemsP,
   };
 

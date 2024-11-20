@@ -20,11 +20,11 @@ const Index = ()=>{
     }
 
     const handleMCQ = ()=>{
-       navigate('/mcq')
+       navigate('/mcq-subjects')
     }
 
     const handleCoding=()=>{
-        navigate("/coding")
+        navigate("/codeInstruction")
     }
 
     return(<>
