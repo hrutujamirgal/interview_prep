@@ -159,6 +159,7 @@ const submit_coding = async(component)=>{
 
 const download_coding_report = ()=>{
   const url = window.URL.createObjectURL(codingBlob);
+  console.log(url);
   const a = document.createElement('a');
   a.href = url;
   a.download = 'coding_report.pdf'; 
