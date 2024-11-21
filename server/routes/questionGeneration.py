@@ -4,13 +4,17 @@ from flask import Blueprint,Flask, request, jsonify
 from difflib import SequenceMatcher
 from flask_cors import CORS
 from sentence_transformers import SentenceTransformer, util 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Enable logging for debugging
 logging.basicConfig(level=logging.DEBUG)
 
 questionGeneration = Blueprint('questionGeneration', __name__)
 # API Key for Gemini
-API_KEY = "AIzaSyA2OgtAGTyyyZ9WTCWZJqdnyX5IYFZPay4"  # Replace with your actual API key
+API_KEY = os.getenv(API_KEY)  # Replace with your actual API key
 genai.configure(api_key=API_KEY)
 
 # Flask setup

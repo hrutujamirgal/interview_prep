@@ -1,5 +1,6 @@
 __pycache__
 routes/__pycache__
-env/
-.env
 reports
+uploads
+
+.env
