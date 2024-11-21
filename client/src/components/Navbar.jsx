@@ -43,18 +43,15 @@ const Navbar = () => {
   }, []);
 
 
-   
+   const handleHr = ()=>{
+    setCookies('topic', ['HR', '00000'])
+    navigate("/instruction")
+   }
 
-  const handlemcq = (item)=>{
-     setCookies('component', 'mcq')
-     setCookies('mcq_topic', item),
-     navigate("/mcq")
-  }
 
-  // Dropdown Menu Items
   const itemsI = [
     { label: <Link to="/subjects">Technical Interview</Link>, key: "0" },
-    { label: <Link to="/hrInterview">HR Interview</Link>, key: "1" },
+    { label: <button onClick={handleHr}>HR Interview</button>, key: "1" },
   ];
 
   const itemsM = [

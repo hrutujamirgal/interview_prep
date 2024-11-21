@@ -1,38 +1,57 @@
-import React, { useEffect, useRef, useState } from "react";
+/* eslint-disable no-unused-vars */
+import { useEffect, useRef, useState } from "react";
 import { useCookies } from "react-cookie";
-import {
-  Button,
-  CircularProgress,
-  Typography,
-  Grid,
-  TextField,
-  Card,
-  CardContent,
-} from "@mui/material";
+import { Button, CircularProgress, Typography, Grid } from "@mui/material";
 import axios from "axios";
+import { useInterview } from "../context/InterviewContext";
+import { useNavigate } from "react-router-dom";
 
 const Interview = () => {
   const [topic, setTopic] = useState(null);
   const [subjectName, setSubjectName] = useState("");
+  const [questions, setQuestions] = useState([]);
   const [question, setQuestion] = useState("");
-  const [followUpQuestion, setFollowUpQuestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [cookies] = useCookies(["topic"]);
+  const [cookies, setCookies] = useCookies(["topic"]);
   const [stream, setStream] = useState(null);
   const mediaRecorder = useRef(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [followUpAnswerText, setFollowUpAnswerText] = useState("");
-  const [followUpIndex, setFollowUpIndex] = useState(0);
-  const [questionIndex, setQuestionIndex] = useState(0);
+  const [report, setReport] = useState({});
+  const [qIndex, setQIndex] = useState(0);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (cookies.topic && cookies.topic.length === 2) {
-      setSubjectName(cookies.topic[0]);
-      setTopic(cookies.topic[1]);
+  const { fetchQuestions, get_report } = useInterview();
+
+  // Fetching and handling the questions
+  const fetchNewQuestion = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetchQuestions(topic);
+      console.log(response.questions[0])
+      setQuestions(response.questions);
+      setQuestion(response.questions[0]);
+      setIsLoading(false);
+      setErrorMessage("");
+      speakQuestion(response.questions[0].question);
+    } catch (error) {
+      setIsLoading(false);
+      setErrorMessage("Error fetching question.");
     }
-  }, [cookies]);
+  };
 
+  const fetchNextQuestion = async () => {
+    if (qIndex < questions.length - 1) {
+      setQIndex(qIndex + 1);
+    } else {
+      handleSubmitReport();
+      setQIndex(0);
+    }
+    setQuestion(questions[qIndex]);
+    speakQuestion(questions[qIndex].question);
+  };
+
+  // Handling Speech Synthesis
   const speakQuestion = (text) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
@@ -41,46 +60,7 @@ const Interview = () => {
     window.speechSynthesis.speak(utterance);
   };
 
-  const fetchNewQuestion = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.post(
-        "http://127.0.0.1:5000/api/interview/question",
-        { topic: topic }
-      );
-      setQuestion(response.data.question);
-      setFollowUpQuestion("");
-      setFollowUpAnswerText("");
-      setIsLoading(false);
-      setErrorMessage("");
-      speakQuestion(response.data.question);
-    } catch (error) {
-      setIsLoading(false);
-      setErrorMessage("Error fetching question.");
-    }
-  };
-
-  const handleAnswerSubmit = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.post(
-        "http://127.0.0.1:5000/api/interview/follow-up",
-        {
-          currentAnswer: followUpAnswerText,
-          followUpIndex: followUpIndex,
-          topic: topic,
-        }
-      );
-      setFollowUpQuestion(response.data.question);
-      setFollowUpIndex(response.data.followUpIndex);
-      setIsLoading(false);
-      speakQuestion(response.data.question);
-    } catch (error) {
-      setIsLoading(false);
-      setErrorMessage("Error fetching follow-up question.");
-    }
-  };
-
+  // Recording Functions
   const startRecording = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -99,11 +79,24 @@ const Interview = () => {
         formData.append("file", blob, "recording.mp4");
 
         try {
-          await axios.post("http://127.0.0.1:5000/upload", formData, {
+          const resp = await axios.post("http://127.0.0.1:5000/upload", formData, {
             headers: {
               "Content-Type": "multipart/form-data",
             },
           });
+
+          console.log(resp.data);
+
+          setReport((prev) => ({
+            ...prev,
+            question: question.question,
+            answer: question.answer,
+            userAnswer: resp.data.transcription,
+            fumble_status: resp.data.fumble.confidence,
+            fumble_score: resp.data.fumble.fumble,
+            confidence_status: resp.data.confidence.message,
+            confidence_score: resp.data.confidence.confidence,
+          }));
         } catch (error) {
           console.error("Error uploading video:", error);
         }
@@ -128,6 +121,61 @@ const Interview = () => {
     setIsRecording(false);
   };
 
+  // Handle report submission
+  const handleSubmitReport = async () => {
+    try {
+      const newReport = {
+        report: report,
+        user_id: cookies.userData.id,
+        topic: cookies.topic[0],
+      };
+
+      setCookies("component", "interview");
+      await get_report(newReport);
+      
+      exitFullScreen();
+      navigate("/feedback");
+    } catch (error) {
+      console.error("Error submitting report:", error);
+    }
+  };
+
+  // Fullscreen handling
+  const goFullScreen = () => {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.mozRequestFullScreen) {
+      elem.mozRequestFullScreen();
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+      elem.msRequestFullscreen();
+    }
+  };
+
+  const exitFullScreen = () => {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (cookies.topic && cookies.topic.length === 2) {
+      setSubjectName(cookies.topic[0]);
+      setTopic(cookies.topic[0]);
+    }
+    goFullScreen();
+  }, [cookies]);
+
   return (
     <div style={{ backgroundColor: "#eef5fc", minHeight: "100vh", padding: "40px" }}>
       <Typography variant="h3" align="center" gutterBottom style={{ color: "#003366", marginBottom: "30px" }}>
@@ -135,19 +183,10 @@ const Interview = () => {
       </Typography>
 
       <Typography variant="h5" align="center" gutterBottom style={{ marginBottom: "20px" }}>
-        {question || "Get ready for your interview!"}
+      {question ? question.question : "Get ready for your interview!"}
       </Typography>
 
-      <Grid
-        container
-        spacing={3}
-        justifyContent="center"
-        alignItems="center"
-        style={{
-          marginBottom: "40px",
-          transition: "transform 0.3s ease-in-out",
-        }}
-      >
+      <Grid container spacing={3} justifyContent="center" alignItems="center" style={{ marginBottom: "40px" }}>
         <Grid item xs={12} sm={isRecording ? 6 : 12}>
           <div style={{ display: "flex", justifyContent: isRecording ? "flex-start" : "center" }}>
             <img
@@ -164,6 +203,7 @@ const Interview = () => {
             />
           </div>
         </Grid>
+
         {isRecording && (
           <Grid item xs={12} sm={6}>
             {stream && (
@@ -189,73 +229,45 @@ const Interview = () => {
         )}
       </Grid>
 
-      <Button
-        variant="contained"
-        onClick={fetchNewQuestion}
-        disabled={isLoading}
-        style={{
-          width: "300px",
-          height: "50px",
-          backgroundColor: "#003366",
-          color: "#ffffff",
-          margin: "10px auto",
-          display: "block",
-          borderRadius: "30px",
-        }}
-      >
-        {isLoading ? <CircularProgress size={24} style={{ color: "#ffffff" }} /> : question ? "Next Question" : "Start Preparation"}
-      </Button>
+      { !isRecording && (
+        <Button
+          variant="contained"
+          onClick={question ? fetchNextQuestion : fetchNewQuestion}
+          disabled={isLoading}
+          style={{
+            width: "300px",
+            height: "50px",
+            backgroundColor: "#003366",
+            color: "#ffffff",
+            margin: "10px auto",
+            display: "block",
+            borderRadius: "30px",
+          }}
+        >
+          {isLoading ? <CircularProgress size={24} style={{ color: "#ffffff" }} /> : question ? "Next Question" : "Start Preparation"}
+        </Button>
+      )}
 
-      <Button
-        variant="contained"
-        onClick={isRecording ? stopRecording : startRecording}
-        style={{
-          width: "300px",
-          height: "50px",
-          backgroundColor: isRecording ? "#FF0000" : "#006400",
-          color: "#ffffff",
-          margin: "10px auto",
-          display: "block",
-          borderRadius: "30px",
-        }}
-      >
-        {isRecording ? "Stop Answering" : "Start Answering"}
-      </Button>
-
-      {followUpQuestion && (
-        <Card variant="outlined" sx={{ mt: 4, padding: "20px", borderRadius: "10px" }}>
-          <CardContent>
-            <Typography variant="h6" style={{ color: "#003366" }}>
-              Follow-Up Question:
-            </Typography>
-            <Typography variant="body1" paragraph>
-              {followUpQuestion}
-            </Typography>
-            <TextField
-              fullWidth
-              label="Your Follow-Up Answer"
-              multiline
-              rows={4}
-              value={followUpAnswerText}
-              onChange={(e) => setFollowUpAnswerText(e.target.value)}
-              margin="normal"
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleAnswerSubmit}
-              fullWidth
-              disabled={isLoading || !followUpAnswerText}
-              style={{ marginTop: "10px", borderRadius: "30px" }}
-            >
-              {isLoading ? <CircularProgress size={24} /> : "Submit Follow-Up Answer"}
-            </Button>
-          </CardContent>
-        </Card>
+      {question && (
+        <Button
+          variant="contained"
+          onClick={isRecording ? stopRecording : startRecording}
+          style={{
+            width: "300px",
+            height: "50px",
+            backgroundColor: isRecording ? "#FF0000" : "#006400",
+            color: "#ffffff",
+            margin: "10px auto",
+            display: "block",
+            borderRadius: "30px",
+          }}
+        >
+          {isRecording ? "Stop Answering" : "Start Answering"}
+        </Button>
       )}
 
       {errorMessage && (
-        <Typography variant="body2" color="error" align="center">
+        <Typography variant="h6" color="error" align="center">
           {errorMessage}
         </Typography>
       )}

@@ -6,6 +6,7 @@ from flask_cors import CORS
 from sentence_transformers import SentenceTransformer, util 
 import os
 from dotenv import load_dotenv
+import re
 
 load_dotenv()
 
@@ -14,7 +15,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 questionGeneration = Blueprint('questionGeneration', __name__)
 # API Key for Gemini
-API_KEY = os.getenv(API_KEY)  # Replace with your actual API key
+API_KEY = os.getenv('API_KEY') 
 genai.configure(api_key=API_KEY)
 
 # Flask setup
@@ -127,54 +128,19 @@ def generate_question():
 def generate_follow_up():
     try:
         data = request.json
-        current_answer = data.get("currentAnswer")
-        follow_up_index = data.get("followUpIndex")
         topic = data.get("topic")
-        current_difficulty = data.get("difficulty", "basic")
+        
 
-        if not current_answer or follow_up_index is None or not topic:
-            return jsonify({"error": "currentAnswer, followUpIndex, and topic are required."}), 400
+        if not topic:
+            return jsonify({"error": "Topic is required."}), 400
 
-        # Determine the next difficulty level
-        difficulty_levels = ["basic", "intermediate", "advanced"]
-        current_level_index = difficulty_levels.index(current_difficulty)
-        next_difficulty = (
-            difficulty_levels[min(current_level_index + 1, len(difficulty_levels) - 1)]
-        )
+        # Start with a very basic question
+        difficulty = "medium"
+        prompt = f"You're an interviewer conducting a technical interview on {topic}. Ask a 5 different {difficulty} question (maximum 15 words) and provide an answer to those questions and give indxing as Question 1 and so on. Give the question and the answer in an object with the index."
 
-        if current_answer.lower() in ["i don't know", "i am not sure", "no idea"]:
-            follow_up_prompt = f"Generate the next {next_difficulty} question related to {topic} (maximum 15 words) for the interview."
-        else:
-            follow_up_prompt = (
-                f"Generate a {next_difficulty} follow-up question based on the answer: '{current_answer}' (maximum 15 words)."
-            )
+        content = generate_content(prompt)
+        return jsonify(content)
 
-        follow_up_content = generate_content(follow_up_prompt)
-
-        # Calculate correctness percentage if applicable
-        correctness_percentage = calculate_correctness(current_answer, follow_up_content)
-
-        if "Answer:" in follow_up_content:
-            next_question, next_answer = follow_up_content.split("Answer:", 1)
-            next_question = enforce_word_limit(next_question.strip(), max_words=15)
-            follow_up_data = {
-                "question": next_question,
-                "correctAnswer": next_answer.strip(),
-                "correctnessPercentage": correctness_percentage,
-                "followUpIndex": follow_up_index + 1,
-                "difficulty": next_difficulty
-            }
-            return jsonify(follow_up_data)
-        else:
-            follow_up_question = enforce_word_limit(follow_up_content.strip(), max_words=15)
-            follow_up_data = {
-                "question": follow_up_question,
-                "correctAnswer": "No answer provided in the follow-up content.",
-                "correctnessPercentage": correctness_percentage,
-                "followUpIndex": follow_up_index + 1,
-                "difficulty": next_difficulty
-            }
-            return jsonify(follow_up_data)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

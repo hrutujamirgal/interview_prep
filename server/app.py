@@ -13,7 +13,9 @@ from routes.user_routes import user_routes
 from routes.get_db_data import get_routes
 from routes.interview_routes import interview_route
 from routes.questionGeneration import questionGeneration
-# Load environment variables from .env file
+from routes.fumbleness import predict_confidence_and_fumbleness
+from routes.model import analyze_confidence
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -59,6 +61,7 @@ def upload_file():
     global all_answers  # Use the global list to store all transcriptions
     
     if 'file' not in request.files:
+        print("filee", request.files)
         return jsonify({"error": "No file part"}), 400
 
     file = request.files['file']
@@ -74,27 +77,31 @@ def upload_file():
     unique_filename = f"{timestamp}_{filename}"
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
     file.save(file_path)
+    
+    try:
+       result = analyze_confidence(os.path.abspath(file_path))
+
+    except Exception as e:
+        result = {'confidence': 0, 'message':"Not Confident"}
 
     # Extract audio from video in WAV format
     audio_file_path = extract_audio_from_video(file_path, unique_filename)
+
     if audio_file_path is None:
         return jsonify({"error": "Error extracting audio from video"}), 500
+    
+    
+    fumble = predict_confidence_and_fumbleness(os.path.abspath(audio_file_path))
 
     # Transcribe audio to text
     transcription = transcribe_audio(audio_file_path)
     if transcription is None:
         return jsonify({"error": "Error transcribing audio"}), 500
 
-    # Append the transcription to the list/
-    all_answers.append(transcription)
-
-    # Debugging: Print transcription and all_answers
-    print(f"Current transcription: {transcription}")
-    print(f"All accumulated answers: {all_answers}")
-
     return jsonify({
         "transcription": transcription,
-        "all_answers": all_answers  # Include the list of all transcriptions in the response
+        "fumble":fumble,
+        "confidence": result
     }), 200
 
     
@@ -105,7 +112,7 @@ def extract_audio_from_video(video_path, video_filename):
         audio_file_path = os.path.join(app.config['AUDIO_FOLDER'], audio_filename)
 
         # Specify the path to FFmpeg executable
-        ffmpeg_path = "C:\\Users\\Sushant\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe"
+        ffmpeg_path = "F:/Full stack projects/interview_prep/models/ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe"
 
         # Use FFmpeg to extract audio from the video
         command = [

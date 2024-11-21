@@ -12,37 +12,36 @@ export const ComponentProvider = ({ children }) => {
   const [codingBlob, setCodingBlob] = useState(null);
   const [hrBlob, setHrBlob] = useState(null);
   const [technicalBlob, setTechnicalBlob] = useState(null);
-  const [cookies, setCookies, removeCookies] = useCookies(['selectSubject','userData', 'mcq_topic']);
-  const route = import.meta.env.VITE_ROUTE
+  const [cookies, setCookies, removeCookies] = useCookies([
+    "selectSubject",
+    "userData",
+    "mcq_topic",
+  ]);
+  const route = import.meta.env.VITE_ROUTE;
 
-//   const selectSubject = (sub) => {
-//     setCookies('selectSubject', sub);
-//   };
-
-const fetchMcQ = async (subject_name) => {
+  const fetchMcQ = async (subject_name) => {
     try {
-        const response = await fetch(`${route}/get_mcq`, { 
-            method: "POST", 
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ subject_name: subject_name })
-        });
+      const response = await fetch(`${route}/get_mcq`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ subject_name: subject_name }),
+      });
 
-        if (!response.ok) {
-            throw new Error("Failed to fetch MCQs");
-        }
+      if (!response.ok) {
+        throw new Error("Failed to fetch MCQs");
+      }
 
-        const data = await response.json();
-        return data.mcq_questions;
+      const data = await response.json();
+      return data.mcq_questions;
     } catch (error) {
-        console.error("Error fetching MCQ:", error);
-        throw error;
+      console.error("Error fetching MCQ:", error);
+      throw error;
     }
-};
+  };
 
-
-const submit_mcq = async (info) => {
+  const submit_mcq = async (info) => {
     try {
       const response = await fetch(`${route}/get_mcq_report`, {
         method: "POST",
@@ -51,13 +50,13 @@ const submit_mcq = async (info) => {
         },
         body: JSON.stringify(info),
       });
-  
+
       if (!response.ok) {
-        throw new Error('Failed to download report');
+        throw new Error("Failed to download report");
       }
-  
+
       const blob = await response.blob();
-      setBlob(blob)
+      setBlob(blob);
 
       notification.success({
         message: "Quiz submitted",
@@ -67,164 +66,189 @@ const submit_mcq = async (info) => {
     }
   };
 
-
-const download_mcq_report = ()=>{
+  const download_mcq_report = () => {
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'mcq_report.pdf'; 
+    a.download = "mcq_report.pdf";
     document.body.appendChild(a);
     a.click();
 
     // Cleanup
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-}
+  };
 
-const fetchCodingQuestion = async()=>{
-  try{
-    const response = await fetch(`${route}/get_coding_question`, {
+  const fetchCodingQuestion = async () => {
+    try {
+      const response = await fetch(`${route}/get_coding_question`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
       });
 
-    const data = await response.json()
-    if(data){
-      const questionsWithIndex = data.questions.map((question, index) => ({
-        ...question,
-        index: index + 1, 
-      }));
+      const data = await response.json();
+      if (data) {
+        const questionsWithIndex = data.questions.map((question, index) => ({
+          ...question,
+          index: index + 1,
+        }));
 
-      return questionsWithIndex;
-    }else{
-      console.log('error in fetching the coding questions')
+        return questionsWithIndex;
+      } else {
+        console.log("error in fetching the coding questions");
+      }
+    } catch (e) {
+      console.log(e);
     }
-  }catch(e){
-    console.log(e)
-  }
-};
+  };
 
+  const fetchReport = async (component) => {
+    try {
+      console.log(component);
+      const response = await fetch(
+        `${route}/get_report/${component}/${cookies.userData.id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-const fetchReport= async(component)=>{
-  try{
-    console.log(component)
-    const response = await fetch(`${route}/get_report/${component}/${cookies.userData.id}`, {
-        method: "GET",
+      const data = await response.json();
+      console.log(data);
+      if (data) {
+        return data;
+      } else {
+        console.error("error");
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const submit_coding = async (component) => {
+    try {
+      console.log(component);
+      const response = await fetch(`${route}/get_coding_report`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify(component),
       });
-    
-    const data = await response.json()
-    if(data){
-      return data
-    }else{
-      console.error('error')
-    }
-  }catch(e){
-    console.log(e)
-  }
-};
 
+      if (!response.ok) {
+        throw new Error("Failed to download report");
+      }
 
-const submit_coding = async(component)=>{
-  try {
-    console.log(component)
-    const response = await fetch(`${route}/get_coding_report`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(component),
-    });
+      const blob = await response.blob();
+      setCodingBlob(blob);
 
-    if (!response.ok) {
-      throw new Error('Failed to download report');
-    }
-
-    const blob = await response.blob();
-    setCodingBlob(blob)
-
-    notification.success({
-      message: "Quiz submitted",
-    });
-  } catch (e) {
-    console.error("Error occurred while submitting MCQ:", e);
-  }
-};
-
-
-
-const download_coding_report = ()=>{
-  const url = window.URL.createObjectURL(codingBlob);
-  console.log(url);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'coding_report.pdf'; 
-  document.body.appendChild(a);
-  a.click();
-  // Cleanup
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
-};
-
-
-
-const download_hr_report = ()=>{
-  const url = window.URL.createObjectURL(hrBlob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'hr_report.pdf'; 
-  document.body.appendChild(a);
-  a.click();
-  // Cleanup
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
-};
-
-
-const download_technical_report = ()=>{
-  const url = window.URL.createObjectURL(technicalBlob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'technical_report.pdf'; 
-  document.body.appendChild(a);
-  a.click();
-  // Cleanup
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
-};
-
-
-
-const sendFeedback = async(rate, feedback, id)=>{
-  try{
-    const response = await fetch(`${route}/send_feedback`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({rate: rate, feedback:feedback, userId: id}),
-    });
-
-    const data = await response.json()
-    if(data){
       notification.success({
-        message: 'Feedback Submitted',
-        description: 'Thank you for your feedback!',
+        message: "Quiz submitted",
       });
+    } catch (e) {
+      console.error("Error occurred while submitting MCQ:", e);
     }
-  }catch(e){
-    notification.error("error occured: ",e)
-  }
-}
+  };
+
+  const download = async (name, id) => {
+    try {
+      // Log the report type and ID for debugging purposes
+      console.log(name, id);
   
+      // Fetch the report from the server
+      const response = await fetch(`${route}/get_one_report/${name}/${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      // Check if the response is OK
+      if (!response.ok) {
+        throw new Error("Failed to download report");
+      }
+  
+      // Extract the blob from the response
+      const blob = await response.blob();
+  
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
+  
+      // Create an anchor element to trigger the download
+      const a = document.createElement("a");
+      a.href = url;
+      
+      // Use a dynamic filename (based on `name` and `id` or something more meaningful)
+      a.download = `${name}_report_${id}.pdf`;
+  
+      // Append the anchor to the document and click it to trigger download
+      document.body.appendChild(a);
+      a.click();
+  
+      // Cleanup the anchor and URL after the download
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  
+
+  const download_coding_report = () => {
+    const url = window.URL.createObjectURL(codingBlob);
+    console.log(url);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "coding_report.pdf";
+    document.body.appendChild(a);
+    a.click();
+    // Cleanup
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const sendFeedback = async (rate, feedback, id) => {
+    try {
+      const response = await fetch(`${route}/send_feedback`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ rate: rate, feedback: feedback, userId: id }),
+      });
+
+      const data = await response.json();
+      if (data) {
+        notification.success({
+          message: "Feedback Submitted",
+          description: "Thank you for your feedback!",
+        });
+      }
+    } catch (e) {
+      notification.error("error occured: ", e);
+    }
+  };
 
   return (
     <ComponentContext.Provider
-      value={{ fetchMcQ, submit_mcq, download_mcq_report, blob, fetchReport, fetchCodingQuestion, submit_coding, download_coding_report, codingBlob, sendFeedback }}
+      value={{
+        fetchMcQ,
+        submit_mcq,
+        download_mcq_report,
+        blob,
+        fetchReport,
+        fetchCodingQuestion,
+        submit_coding,
+        download_coding_report,
+        codingBlob,
+        sendFeedback,
+        download
+      }}
     >
       {children}
     </ComponentContext.Provider>

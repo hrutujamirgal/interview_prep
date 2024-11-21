@@ -1,8 +1,10 @@
+/* eslint-disable no-undef */
 /* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react";
 import { Button, Table, Select, notification } from "antd";
 import { useCookies } from "react-cookie";
 import { useComponent } from "../context/ComponentContext";
+import {useInterview} from "../context/InterviewContext"
 
 const { Option } = Select;
 
@@ -16,9 +18,9 @@ const Report = () => {
     download_mcq_report,
     fetchReport,
     download_coding_report,
-    download_hr_report,
-    download_technical_report,
+    download
   } = useComponent();
+  const {download_report} = useInterview()
   const [column, setColumn] = useState([]);
 
   useEffect(() => {
@@ -62,13 +64,9 @@ const Report = () => {
             await download_coding_report();
             setColumn(coding_column);
             break;
-          case "hr":
-            await download_hr_report();
-            setColumn(hr_column);
-            break;
-          case "technical":
-            await download_technical_report();
-            setColumn(technical_column);
+          case "interview":
+            await download_report();
+            setColumn(interview_column);
             break;
           default:
             throw new Error("Invalid report type.");
@@ -112,11 +110,11 @@ const Report = () => {
       title: "Report",
       dataIndex: "report",
       key: "report",
-      render: (report) => (
-        <Button type="link" onClick={() => window.open(report, "_blank")}>
-          View
+      render: (report, _id) => (<>
+        <Button type="link" onClick={async() => await download('mcq', _id._id)}>
+        {console.log(_id._id)}View
         </Button>
-      ),
+      </>),
     },
   ];
 
@@ -136,14 +134,14 @@ const Report = () => {
       dataIndex: "report",
       key: "report",
       render: (report) => (
-        <Button type="link" onClick={() => window.open(report, "_blank")}>
+        <Button type="link" onClick={async() => await download('coding', report._id)}>
           View
         </Button>
       ),
     },
   ];
 
-  const technical_column = [
+  const interview_column = [
     {
       title: "Subject",
       dataIndex: "selectedTopic",
@@ -158,27 +156,11 @@ const Report = () => {
       title: "Report",
       dataIndex: "report",
       key: "report",
-      render: (report) => (
-        <Button type="link" onClick={() => window.open(report, "_blank")}>
-          View
-        </Button>
-      ),
-    },
-  ];
+      render: (report, _id) => (
 
-  const hr_column = [
-    {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
-    },
-    {
-      title: "Report",
-      dataIndex: "report",
-      key: "report",
-      render: (report) => (
-        <Button type="link" onClick={() => window.open(report, "_blank")}>
-          View
+        
+        <Button type="link" onClick={async() => await download('interview', report._id)}>
+          {console.log(_id)}View
         </Button>
       ),
     },
@@ -193,11 +175,8 @@ const Report = () => {
         case "coding":
           setColumn(coding_column);
           break;
-        case "hr":
-          setColumn(hr_column);
-          break;
-        case "technical":
-          setColumn(technical_column);
+        case "interview":
+          setColumn(interview_column);
           break;
         default:
           setColumn([]);
@@ -236,8 +215,7 @@ const Report = () => {
           >
             <Option value="mcq">MCQ</Option>
             <Option value="coding">Coding</Option>
-            <Option value="technical">Technical Interview</Option>
-            <Option value="hr">HR Interview</Option>
+            <Option value="interview">Interview</Option>
           </Select>
         </div>
 

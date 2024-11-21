@@ -1,7 +1,8 @@
 #ek ha change
+from pyexpat import errors
 import pymongo
 import logging
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_file
 from dotenv import load_dotenv
 import os
 import random
@@ -131,8 +132,8 @@ def get_report(name, user):
         table = db['m_c_q_model']
     elif name == 'coding':
         table =  db['coding_model']
-    # elif name == 'technical':
-    #     table = Interview
+    elif name == 'interview':
+        table = db['interview']
     else:
         return jsonify({"error": "Invalid report type"}), 400
 
@@ -219,3 +220,53 @@ def send_feedback():
     except Exception as e:
         print(f"Unexpected error: {e}")
         return jsonify({'message': 'An unexpected error occurred', 'error': str(e)}), 500
+
+
+
+@get_routes.route("/get_one_report/<name>/<id>", methods=['GET'])
+def get_one_report(name, id):
+    if not name:
+        return jsonify({"error": "Name parameter is required"}), 400
+
+    table = None
+    if name == 'mcq':
+        table = db['m_c_q_model']
+    elif name == 'coding':
+        table = db['coding_model']
+    elif name == 'interview':
+        table = db['interview']
+    else:
+        return jsonify({"error": "Invalid report type"}), 400
+
+    try:
+        # Ensure the ID is in ObjectId format for MongoDB query
+        if not ObjectId.is_valid(id):
+            return jsonify({"error": "Invalid ID format"}), 400
+        
+        record = table.find_one({'_id': ObjectId(id)})
+
+        if not record:
+            return jsonify({"error": "Report not found"}), 404
+
+        # Convert MongoDB ObjectId to string for JSON serialization
+        record['_id'] = str(record['_id'])
+        record['userId'] = str(record['userId'])
+
+        # Handle date formatting if present
+        if 'date' in record and isinstance(record['date'], datetime):
+            record['date'] = record['date'].strftime('%d-%m-%Y')
+
+        # Assuming the file path is stored in `report.report`
+        file_path = record.get('report')
+        if not file_path:
+            return jsonify({"error": "Report file path not found"}), 400
+        
+        file_path = os.path.abspath(file_path)
+        
+        # Use send_from_directory to return the file
+        # return send_file(file, as_attachment=True, download_name='report.pdf')
+
+        return send_file(file_path, as_attachment=True, download_name='report.pdf')
+        
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500

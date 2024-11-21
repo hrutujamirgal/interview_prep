@@ -31,7 +31,6 @@ class Interview(Document):
     report = FileField(required=True) 
 
 
-# (Interview modle)
 class MCQModel(Document):
     userId = ReferenceField(User, required=True)
     selectedTopic = StringField(required=True, max_length=50)

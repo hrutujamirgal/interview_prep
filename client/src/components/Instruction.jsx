@@ -21,7 +21,7 @@ const Instruction = () => {
 
   return (
     <>
-      <div className="h-full overflow-x-hidden overflow-y-hidden">
+      <div className="h-screen overflow-x-hidden overflow-y-hidden">
         <div className="flex flex-row h-full overflow-y-scroll overflow-x-hidden w-screen">
           <div className="bg-submain w-1/3">
             <p className="text-center mt-52 font-serif text-xl md:text-2xl lg:text-3xl font-bold p-5">

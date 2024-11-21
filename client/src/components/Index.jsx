@@ -15,7 +15,7 @@ const Index = ()=>{
     }
 
     const handleHR=()=>{
-        setCookies('topic', 'HR')
+        setCookies('topic', ['HR', '00000'])
         navigate("/instruction")
     }
 
