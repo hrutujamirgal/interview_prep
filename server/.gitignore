@@ -2,5 +2,6 @@ __pycache__
 routes/__pycache__
 reports
 uploads
-
+env
+audio_files
 .env
