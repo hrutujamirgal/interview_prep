@@ -12,7 +12,7 @@ from database import initialize_db
 from routes.user_routes import user_routes
 from routes.get_db_data import get_routes
 from routes.interview_routes import interview_route
-
+from routes.questionGeneration import questionGeneration
 # Load environment variables from .env file
 load_dotenv()
 
@@ -27,7 +27,7 @@ initialize_db(app)
 app.register_blueprint(user_routes)
 app.register_blueprint(get_routes)
 app.register_blueprint(interview_route)
-
+app.register_blueprint(questionGeneration)
 @app.route('/')
 def index():
     return "MongoDB connected with Flask using MongoEngine"
@@ -85,7 +85,7 @@ def upload_file():
     if transcription is None:
         return jsonify({"error": "Error transcribing audio"}), 500
 
-    # Append the transcription to the list
+    # Append the transcription to the list/
     all_answers.append(transcription)
 
     # Debugging: Print transcription and all_answers
@@ -105,7 +105,7 @@ def extract_audio_from_video(video_path, video_filename):
         audio_file_path = os.path.join(app.config['AUDIO_FOLDER'], audio_filename)
 
         # Specify the path to FFmpeg executable
-        ffmpeg_path = "C:\\Users\\HP\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe"
+        ffmpeg_path = "C:\\Users\\Sushant\\Downloads\\ffmpeg-master-latest-win64-gpl\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe"
 
         # Use FFmpeg to extract audio from the video
         command = [

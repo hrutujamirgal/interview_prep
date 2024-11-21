@@ -1,19 +1,24 @@
-from pymongo import MongoClient, errors
+#ek ha change
+import pymongo
+import logging
 from flask import Blueprint, jsonify, request
 from dotenv import load_dotenv
 import os
 import random
 from bson import ObjectId
 from datetime import datetime
-
-
+#ankhi ek haa change
+logging.basicConfig(level=logging.WARNING)
 load_dotenv()
 
 get_routes = Blueprint('get_routes', __name__)
 
 # Configuring with the database
 try:
-    client = MongoClient(os.getenv('MONGODB_URI'))
+    #ek haa change
+    # client = MongoClient(os.getenv('MONGODB_URI'))
+    client = pymongo.MongoClient(os.getenv('MONGODB_URI'))
+
     db = client.get_default_database()
 except errors.PyMongoError as e:
     print(f"Database connection error: {e}")

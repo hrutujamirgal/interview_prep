@@ -1,200 +1,264 @@
-import { Button } from "antd";
-import { useRef, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-
-const Avatar = () => {
-  return (
-    <img
-      src="/person.jpg"
-      alt="Avatar"
-      style={{
-        width: "100%",
-        height: "100%",
-        objectFit: "cover",
-        borderRadius: "1%",
-      }}
-    />
-  );
-};
+import React, { useEffect, useRef, useState } from "react";
+import { useCookies } from "react-cookie";
+import {
+  Button,
+  CircularProgress,
+  Typography,
+  Grid,
+  TextField,
+  Card,
+  CardContent,
+} from "@mui/material";
+import axios from "axios";
 
 const Interview = () => {
-  const videoRef = useRef(null);
-  const [answer, setAnswer] = useState(false);
-  const [askedQuestion, setAskedQuestion] = useState(0);
-  const [recordedAnswers, setRecordedAnswers] = useState([]);
-  const navigate = useNavigate();
-
-  const [mediaStream, setMediaStream] = useState(null);
-  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [topic, setTopic] = useState(null);
+  const [subjectName, setSubjectName] = useState("");
+  const [question, setQuestion] = useState("");
+  const [followUpQuestion, setFollowUpQuestion] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [cookies] = useCookies(["topic"]);
+  const [stream, setStream] = useState(null);
+  const mediaRecorder = useRef(null);
   const [isRecording, setIsRecording] = useState(false);
-
-  const questions = [
-    "Tell me about yourself.",
-    "Why do you want this job?",
-  ];
+  const [followUpAnswerText, setFollowUpAnswerText] = useState("");
+  const [followUpIndex, setFollowUpIndex] = useState(0);
+  const [questionIndex, setQuestionIndex] = useState(0);
 
   useEffect(() => {
-    if (!answer) {
-      speakQuestion(questions[askedQuestion]);
+    if (cookies.topic && cookies.topic.length === 2) {
+      setSubjectName(cookies.topic[0]);
+      setTopic(cookies.topic[1]);
     }
-  }, [askedQuestion, answer]);
+  }, [cookies]);
 
   const speakQuestion = (text) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
     utterance.rate = 1;
-    window.speechSynthesis.cancel(); // Stop any ongoing TTS
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   };
 
-  const handleAnswer = () => {
-    if (answer) {
-      stopRecording();
-      if (askedQuestion < questions.length - 1) {
-        setAskedQuestion((prev) => prev + 1); // Move to the next question
-      } else {
-        stopWebcam(); // Stop webcam after the last question
-        uploadAllAnswers();
-        navigate("/report"); // Redirect to the report page
-      }
-    } else {
-      startWebcam(); // Start webcam
-      startRecording(); // Start recording
+  const fetchNewQuestion = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.post(
+        "http://127.0.0.1:5000/api/interview/question",
+        { topic: topic }
+      );
+      setQuestion(response.data.question);
+      setFollowUpQuestion("");
+      setFollowUpAnswerText("");
+      setIsLoading(false);
+      setErrorMessage("");
+      speakQuestion(response.data.question);
+    } catch (error) {
+      setIsLoading(false);
+      setErrorMessage("Error fetching question.");
     }
-    setAnswer(!answer); // Toggle answering state
   };
 
-  const startWebcam = async () => {
+  const handleAnswerSubmit = async () => {
+    setIsLoading(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const response = await axios.post(
+        "http://127.0.0.1:5000/api/interview/follow-up",
+        {
+          currentAnswer: followUpAnswerText,
+          followUpIndex: followUpIndex,
+          topic: topic,
+        }
+      );
+      setFollowUpQuestion(response.data.question);
+      setFollowUpIndex(response.data.followUpIndex);
+      setIsLoading(false);
+      speakQuestion(response.data.question);
+    } catch (error) {
+      setIsLoading(false);
+      setErrorMessage("Error fetching follow-up question.");
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true,
       });
-      setMediaStream(stream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream; // Attach the stream to the video element
-      }
+      setStream(mediaStream);
+
+      const recorder = new MediaRecorder(mediaStream);
+      const chunks = [];
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+
+      recorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: "video/mp4" });
+        const formData = new FormData();
+        formData.append("file", blob, "recording.mp4");
+
+        try {
+          await axios.post("http://127.0.0.1:5000/upload", formData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          });
+        } catch (error) {
+          console.error("Error uploading video:", error);
+        }
+      };
+
+      recorder.start();
+      mediaRecorder.current = recorder;
+      setIsRecording(true);
     } catch (error) {
-      console.error("Error accessing the webcam: ", error);
+      console.error("Error accessing media devices:", error);
     }
-  };
-
-  const stopWebcam = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject;
-      const tracks = stream.getTracks();
-      tracks.forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
-      setMediaStream(null); // Reset mediaStream after stopping webcam
-    }
-  };
-
-  const startRecording = () => {
-    if (!mediaStream) return;
-
-    const chunks = [];
-    const recorder = new MediaRecorder(mediaStream, { mimeType: "video/webm" });
-
-    recorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        chunks.push(event.data);
-      }
-    };
-
-    recorder.onstop = () => {
-      if (chunks.length > 0) {
-        const blob = new Blob(chunks, { type: "video/webm" });
-        const recordedVideoURL = URL.createObjectURL(blob);
-
-        setRecordedAnswers((prev) => [
-          ...prev,
-          { question: questions[askedQuestion], videoURL: recordedVideoURL },
-        ]);
-
-        // Upload the recording for the current question
-        uploadRecording(blob);
-      }
-    };
-
-    recorder.start(); // Start recording
-    setMediaRecorder(recorder); // Save the recorder instance
-    setIsRecording(true);
   };
 
   const stopRecording = () => {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-      mediaRecorder.stop();
-      setIsRecording(false);
+    if (mediaRecorder.current) {
+      mediaRecorder.current.stop();
     }
-  };
-
-  const uploadRecording = (blob) => {
-    const formData = new FormData();
-    formData.append("file", blob, `recorded_video_${askedQuestion + 1}.mp4`);
-
-    fetch("http://localhost:5000/upload", {
-      method: "POST",
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("File uploaded successfully", data);
-      })
-      .catch((error) => {
-        console.error("Error uploading file:", error);
-      });
-  };
-
-  const uploadAllAnswers = () => {
-    fetch("http://localhost:5000/save-answers", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ answers: recordedAnswers }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("All answers saved successfully", data);
-      })
-      .catch((error) => {
-        console.error("Error saving answers:", error);
-      });
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+    setIsRecording(false);
   };
 
   return (
-    <div className="flex flex-col items-center justify-between w-full h-screen p-10">
-      <div
-        className="mt-10 font-serif text-lg"
-        style={{ fontFamily: "Times New Roman", fontSize: "40px" }}
-      >
-        {askedQuestion + 1}. {questions[askedQuestion]}
-      </div>
-      <div
-        className="flex items-center justify-center w-2/3 mt-20"
+    <div style={{ backgroundColor: "#eef5fc", minHeight: "100vh", padding: "40px" }}>
+      <Typography variant="h3" align="center" gutterBottom style={{ color: "#003366", marginBottom: "30px" }}>
+        Interview for {subjectName}
+      </Typography>
+
+      <Typography variant="h5" align="center" gutterBottom style={{ marginBottom: "20px" }}>
+        {question || "Get ready for your interview!"}
+      </Typography>
+
+      <Grid
+        container
+        spacing={3}
+        justifyContent="center"
+        alignItems="center"
         style={{
-          backgroundColor: "#f5f5f5",
-          borderRadius: "10px",
-          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-          height: "650px",
-          width: "650px",
+          marginBottom: "40px",
+          transition: "transform 0.3s ease-in-out",
         }}
       >
-        <Avatar />
-      </div>
-      {answer && (
-        <div className="w-2/3 mt-10" style={{ height: "650px", width: "650px" }}>
-          <video ref={videoRef} autoPlay className="w-full h-full" />
-        </div>
+        <Grid item xs={12} sm={isRecording ? 6 : 12}>
+          <div style={{ display: "flex", justifyContent: isRecording ? "flex-start" : "center" }}>
+            <img
+              src="/person.jpg"
+              alt="Avatar"
+              style={{
+                width: "100%",
+                maxWidth: "400px",
+                height: "auto",
+                objectFit: "cover",
+                borderRadius: "10px",
+                boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.3)",
+              }}
+            />
+          </div>
+        </Grid>
+        {isRecording && (
+          <Grid item xs={12} sm={6}>
+            {stream && (
+              <video
+                ref={(video) => {
+                  if (video) {
+                    video.srcObject = stream;
+                  }
+                }}
+                autoPlay
+                muted
+                style={{
+                  width: "100%",
+                  maxWidth: "400px",
+                  height: "auto",
+                  objectFit: "cover",
+                  borderRadius: "10px",
+                  boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.3)",
+                }}
+              />
+            )}
+          </Grid>
+        )}
+      </Grid>
+
+      <Button
+        variant="contained"
+        onClick={fetchNewQuestion}
+        disabled={isLoading}
+        style={{
+          width: "300px",
+          height: "50px",
+          backgroundColor: "#003366",
+          color: "#ffffff",
+          margin: "10px auto",
+          display: "block",
+          borderRadius: "30px",
+        }}
+      >
+        {isLoading ? <CircularProgress size={24} style={{ color: "#ffffff" }} /> : question ? "Next Question" : "Start Preparation"}
+      </Button>
+
+      <Button
+        variant="contained"
+        onClick={isRecording ? stopRecording : startRecording}
+        style={{
+          width: "300px",
+          height: "50px",
+          backgroundColor: isRecording ? "#FF0000" : "#006400",
+          color: "#ffffff",
+          margin: "10px auto",
+          display: "block",
+          borderRadius: "30px",
+        }}
+      >
+        {isRecording ? "Stop Answering" : "Start Answering"}
+      </Button>
+
+      {followUpQuestion && (
+        <Card variant="outlined" sx={{ mt: 4, padding: "20px", borderRadius: "10px" }}>
+          <CardContent>
+            <Typography variant="h6" style={{ color: "#003366" }}>
+              Follow-Up Question:
+            </Typography>
+            <Typography variant="body1" paragraph>
+              {followUpQuestion}
+            </Typography>
+            <TextField
+              fullWidth
+              label="Your Follow-Up Answer"
+              multiline
+              rows={4}
+              value={followUpAnswerText}
+              onChange={(e) => setFollowUpAnswerText(e.target.value)}
+              margin="normal"
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleAnswerSubmit}
+              fullWidth
+              disabled={isLoading || !followUpAnswerText}
+              style={{ marginTop: "10px", borderRadius: "30px" }}
+            >
+              {isLoading ? <CircularProgress size={24} /> : "Submit Follow-Up Answer"}
+            </Button>
+          </CardContent>
+        </Card>
       )}
-      <div className="mt-10">
-        <Button
-          onClick={handleAnswer}
-          className="p-5 mt-auto font-serif rounded-md text-md md:text-lg lg:text-xl"
-        >
-          {answer ? "Stop Answering" : "Answer the Question"}
-        </Button>
-      </div>
+
+      {errorMessage && (
+        <Typography variant="body2" color="error" align="center">
+          {errorMessage}
+        </Typography>
+      )}
     </div>
   );
 };
