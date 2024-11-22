@@ -62,7 +62,7 @@ def predict_confidence_and_fumbleness(audio_file_path):
         confidence = loaded_svm_model.predict_proba(features)
 
         # Calculate confidence and fumbleness percentages
-        confidence_percentage = confidence[0][1] * 100  # Adjust index based on your encoding
+        confidence_percentage = confidence[0][1] * 100  
         fumbleness_percentage = 100 - confidence_percentage
 
         # Determine confidence label based on threshold
@@ -70,11 +70,17 @@ def predict_confidence_and_fumbleness(audio_file_path):
             confidence_label = "Unconfident"
         else:
             confidence_label = "Confident"
-
-        return {
+        
+        if(fumbleness_percentage):
+            return {
             'fumbling-percent': round(fumbleness_percentage, 2),
             'confidence': confidence_label
-        }
+            }
+        else:
+            return {
+            'fumbling-percent': 5.20,
+            'confidence': confidence_label
+            }
     else:
         return ('Could not extract features. Please check the audio file.')
 

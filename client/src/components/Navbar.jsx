@@ -61,8 +61,8 @@ const Navbar = () => {
   ];
 
   const itemsP = [
-
-    { label: <Link to="/report">Report</Link>, key: "0" },
+    { label: <Link to="/mock">Full Mock Interview</Link>, key: "0" },
+    { label: <Link to="/report">Report</Link>, key: "1" },
 
     {
       label: (
@@ -70,7 +70,7 @@ const Navbar = () => {
           Logout
         </Button>
       ),
-      key: "1",
+      key: "2",
     },
   ];
 

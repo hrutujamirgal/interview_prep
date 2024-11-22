@@ -1,6 +1,5 @@
-from models import User , MCQModel, CodingModel, Interview
-from flask import jsonify, request, send_file, make_response, Blueprint,  session
-from functools import wraps
+from models import User , MCQModel, CodingModel, FullMock
+from flask import jsonify, request, send_file, Blueprint
 from datetime import datetime
 from bson import ObjectId
 from reportlab.pdfgen import canvas
@@ -8,33 +7,106 @@ import os
 from routes.questionGeneration import calculate_correctness
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from pyexpat import errors
+import pymongo
+import logging
+from flask import Blueprint, jsonify, request, send_file
+from dotenv import load_dotenv
+import os
+import random
+from bson import ObjectId
+from datetime import datetime
+from PyPDF2 import PdfMerger
+logging.basicConfig(level=logging.WARNING)
+load_dotenv()
+
+mock_route = Blueprint('mock_route', __name__)
+
+try:
+    #ek haa change
+    # client = MongoClient(os.getenv('MONGODB_URI'))
+    client = pymongo.MongoClient(os.getenv('MONGODB_URI'))
+
+    db = client.get_default_database()
+except errors.PyMongoError as e:
+    print(f"Database connection error: {e}")
+    db = None
 
 
-interview_route = Blueprint('interview_route', __name__)
+@mock_route.route('/get_mcqs', methods=['GET'])
+def get_mcq():
+    try:
+
+        collection = db['mcq_questions']
+        
+        document = collection.find_one()  
+
+        if document and "mcq_questions" in document:
+            mcq_questions = document["mcq_questions"]
+            if len(mcq_questions) > 10:
+                random_questions = random.sample(mcq_questions, 10) 
+            else:
+                random_questions = mcq_questions  
+
+            # Convert ObjectId to string for the response
+            document['_id'] = str(document['_id'])
+            document['subject_id'] = str(document['subject_id'])
+
+            return jsonify({
+                'message': 'MCQ questions fetched successfully',
+                'mcq_questions': random_questions
+            }), 200
+        else:
+            return jsonify({'message': 'No questions found for this subject'}), 404
+
+    except errors.PyMongoError as e:
+        print(f"Database error while fetching MCQs: {e}")
+        return jsonify({'message': 'Error fetching MCQs', 'error': str(e)}), 500
+
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return jsonify({'message': 'An unexpected error occurred', 'error': str(e)}), 500
 
 
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return jsonify({'error': 'Login required'}), 403
-        return f(*args, **kwargs)
-    return decorated_function
+
+@mock_route.route('/get_coding_questions', methods=['GET'])
+def get_coding_question():
+    try:
+        # Fetch random questions from the database
+        collection = db['programmingQuestions']
+        random_questions = list(collection.aggregate([{"$sample": {"size": 3}}]))
+
+        # Convert ObjectId to string
+        for question in random_questions:
+            question['_id'] = str(question['_id'])
+
+        return jsonify({"questions": random_questions}), 200
+
+    except errors.PyMongoError as e:
+        print(f"Database error while fetching coding questions: {e}")
+        return jsonify({
+            'message': 'Error fetching coding questions',
+            'error': str(e)
+        }), 500
+
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return jsonify({
+            'message': 'An unexpected error occurred',
+            'error': str(e)
+        }), 500
 
 
 
 def create_pdf_with_reportlab(data, file_path, topic):
     # A4 page size dimensions
     width, height = A4
-    margin = 40  # Margin from edges (top, bottom, left, right)
-
-    # Create the PDF and save it to the specified file path
+    margin = 40  
     p = canvas.Canvas(file_path, pagesize=A4)
 
-    # Title
     p.setFont("Helvetica-Bold", 16)
     p.drawString((width - 300) / 2, height - margin, f"MCQ Test Report on {topic}")
-    y_position = height - margin - 40  # Adjust position for title
+    y_position = height - margin - 40  
 
     p.setFont("Helvetica", 12)
     score = 0
@@ -49,28 +121,24 @@ def create_pdf_with_reportlab(data, file_path, topic):
             p.drawString(margin + 20, y_position, f"Option: {option}")
             y_position -= 20
 
-        # Print Answer and Selected Option
         p.drawString(margin, y_position, f"Answer: {question_data['answer']}")
         y_position -= 20
         p.drawString(margin, y_position, f"Selected Option: {question_data['selected_option']}")
         y_position -= 20
 
-        # Calculate and print score for each question
         question_score = 1 if question_data['selected_option'] == question_data['answer'] else 0
         score += question_score
         p.drawString(margin, y_position, f"Score: {question_score}")
-        y_position -= 30  # Extra space between questions
+        y_position -= 30  
 
-        # Start a new page if we reach the bottom
         if y_position < margin:
             p.showPage()
-            y_position = height - margin - 40  # Reset y position for new page
+            y_position = height - margin - 40 
 
-    # Print total score at the end
     p.drawString(margin, y_position, f"Total Score: {score}")
     y_position -= 30
+    score *= 10
 
-    # Finish up the PDF
     p.showPage()
     p.save()
 
@@ -78,13 +146,13 @@ def create_pdf_with_reportlab(data, file_path, topic):
 
 
 
-@interview_route.route('/get_mcq_report', methods=['POST'])
-# @login_required
+
+@mock_route.route('/get_mcq_score', methods=['POST'])
 def get_mcq_report():
     try:
         data = request.json
         user_id = data.get('user_id')
-        selected_topic = data.get('selectedTopic')
+        selected_topic = "Full Mock"
         questions = data.get('questions')
 
         # Convert user_id to ObjectId
@@ -102,26 +170,23 @@ def get_mcq_report():
         pdf_filename = f"mcq_report_{user_id}_{timestamp}.pdf"
         file_path = os.path.join("reports/mcq", pdf_filename)
 
-        # Ensure the "reports" directory exists
         os.makedirs("reports/mcq", exist_ok=True)
 
-        # Create the PDF and save it to the file path
         score = create_pdf_with_reportlab(questions, file_path, selected_topic)
 
-        # Store the file path in MongoDB (not the PDF content itself)
         mcq_instance = MCQModel(
             userId=user,
             selectedTopic=selected_topic,
             score=score,
-            report=file_path  # Save the file path in MongoDB
+            report=file_path  
         )
         mcq_instance.save()
 
-        # Send the PDF file as a downloadable attachment
-        return send_file(file_path, as_attachment=True, download_name='mcq_report.pdf')
+        return jsonify({"score":score, "path": file_path})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 
@@ -194,9 +259,7 @@ def create_pdf_with_reportlab_coding(data, file_path):
     return score
 
 
-
-@interview_route.route('/get_coding_report', methods=['POST'])
-# @login_required
+@mock_route.route('/get_coding_score', methods=['POST'])
 def get_coding_report():
     try:
         data = request.json
@@ -236,10 +299,11 @@ def get_coding_report():
         coding_instance.save()
 
         # Send the PDF file as a downloadable attachment
-        return send_file(file_path, as_attachment=True, download_name='coding_report.pdf')
+        return jsonify({"score":score, "path": file_path})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 
@@ -320,13 +384,16 @@ def create_pdf_with_reportlab_interview(data, file_path, topic):
     return score
 
 
-@interview_route.route('/get_report', methods=['POST'])
-# @login_required
+
+
+@mock_route.route('/get_report_score', methods=['POST'])
 def get_report():
     try:
-        data = request.json
+        data = request.json.get('component')
+        mcq = request.json.get('mcq')
+        code = request.json.get('code')
         user_id = data.get('user_id')
-        selected_topic = data.get('topic')
+        selected_topic = 'Full Mock Interview'
         questions = data.get('report')
 
         # Convert user_id to ObjectId
@@ -344,24 +411,51 @@ def get_report():
         pdf_filename = f"{selected_topic}_interview_report_{user_id}_{timestamp}.pdf"
         file_path = os.path.join("reports/interview", pdf_filename)
 
-        # Ensure the "reports" directory exists
         os.makedirs("reports/interview", exist_ok=True)
 
-        # Create the PDF and save it to the file path
         score = create_pdf_with_reportlab_interview(questions, file_path, selected_topic)
 
-        print("till here")
+        mcq_path = os.path.abspath(mcq)
+        coding_path = os.path.abspath(code)
+        # Combine PDFs
+        merger = PdfMerger()
 
-        # Store the file path in MongoDB (not the PDF content itself)
-        instance = Interview(
+        merger.append(mcq_path)
+        merger.append(coding_path)
+
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        pdf_filename = f"full_mock_report_{user_id}_{timestamp}.pdf"
+        file_path = os.path.join("reports/fullMock", pdf_filename)
+
+        # Ensure the "reports" directory exists
+        os.makedirs("reports/fullMock", exist_ok=True)
+
+        merger.write(file_path)
+        merger.close()
+
+        instance = FullMock(
             userId=user,
-            selectedTopic=selected_topic,
             report=file_path 
         )
         instance.save()
 
-        # Send the PDF file as a downloadable attachment
-        return send_file(file_path, as_attachment=True, download_name='interview_report.pdf')
+        return send_file(file_path, as_attachment=True, download_name='full_mock_report.pdf')
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
+@mock_route.route('/get_mock_report', methods=['POST'])
+def get_mock_report():
+    try:
+        data = request.json
+        print(data)
+        mock_path = os.path.abspath(data)
+
+        return send_file(mock_path, as_attachment=True, download_name='mock_report.pdf')
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

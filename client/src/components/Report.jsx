@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-undef */
 /* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react";
@@ -157,10 +158,8 @@ const Report = () => {
       dataIndex: "report",
       key: "report",
       render: (report, _id) => (
-
-        
         <Button type="link" onClick={async() => await download('interview', report._id)}>
-          {console.log(_id)}View
+          View
         </Button>
       ),
     },

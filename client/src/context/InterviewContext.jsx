@@ -48,6 +48,9 @@ export const InterviewProvider = ({ children }) => {
     }
   };
 
+
+  
+
   const fetchSubjects = async () => {
     try {
       const response = await fetch(`${route}/get_subjects`, { method: "GET" });
@@ -120,7 +123,7 @@ export const InterviewProvider = ({ children }) => {
   
   const get_report = async(component)=>{
     try {
-      console.log(component)
+      console.log('hre report:', component)
       const response = await fetch(`${route}/get_report`, {
         method: "POST",
         headers: {
@@ -143,6 +146,8 @@ export const InterviewProvider = ({ children }) => {
       console.error("Error occurred while submitting MCQ:", e);
     }
   };
+
+  
   
   
   

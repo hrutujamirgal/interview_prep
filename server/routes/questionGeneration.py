@@ -146,3 +146,24 @@ def generate_follow_up():
         return jsonify({"error": str(e)}), 500
 
 
+
+# Route to handle follow-up question generation
+@questionGeneration.route('/questions', methods=['POST'])
+def generate_fullI_questions():
+    try:
+        data = request.json
+        topic = data.get("topic")
+        
+        if not topic:
+            return jsonify({"error": "Topic is required."}), 400
+
+        prompt = f"You're an interviewer conducting a technical interview on computer science topics. Ask a 10 different mix question (maximum 15 words) on both technical and HR round and provide an answer to those questions and give indexing as Question 1 and so on. Give the question and the answer in an object with the index."
+
+        content = generate_content(prompt)
+        return jsonify(content)
+
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+

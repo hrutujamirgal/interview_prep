@@ -1,4 +1,4 @@
-#ek ha change
+
 from pyexpat import errors
 import pymongo
 import logging
@@ -69,8 +69,8 @@ def get_mcq():
 
         if document and "mcq_questions" in document:
             mcq_questions = document["mcq_questions"]
-            if len(mcq_questions) > 3:
-                random_questions = random.sample(mcq_questions, 3) 
+            if len(mcq_questions) > 10:
+                random_questions = random.sample(mcq_questions, 10) 
             else:
                 random_questions = mcq_questions  
 

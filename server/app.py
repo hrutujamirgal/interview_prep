@@ -12,6 +12,7 @@ from database import initialize_db
 from routes.user_routes import user_routes
 from routes.get_db_data import get_routes
 from routes.interview_routes import interview_route
+from routes.fullMock_routes import mock_route
 from routes.questionGeneration import questionGeneration
 from routes.fumbleness import predict_confidence_and_fumbleness
 from routes.model import analyze_confidence
@@ -29,6 +30,7 @@ initialize_db(app)
 app.register_blueprint(user_routes)
 app.register_blueprint(get_routes)
 app.register_blueprint(interview_route)
+app.register_blueprint(mock_route)
 app.register_blueprint(questionGeneration)
 @app.route('/')
 def index():

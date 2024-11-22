@@ -3,10 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { useCookies } from "react-cookie";
 import { Button, CircularProgress, Typography, Grid } from "@mui/material";
 import axios from "axios";
-import { useInterview } from "../context/InterviewContext";
+import { useComponent } from "../context/ComponentContext";
 import { useNavigate } from "react-router-dom";
 
-const Interview = () => {
+const MockInterview = () => {
   const [topic, setTopic] = useState(null);
   const [subjectName, setSubjectName] = useState("");
   const [questions, setQuestions] = useState([]);
@@ -21,13 +21,13 @@ const Interview = () => {
   const [qIndex, setQIndex] = useState(0);
   const navigate = useNavigate();
 
-  const { fetchQuestions, get_report } = useInterview();
+  const { fetchMockQuestions, get_report_mock } = useComponent();
 
   // Fetching and handling the questions
   const fetchNewQuestion = async () => {
     setIsLoading(true);
     try {
-      const response = await fetchQuestions(topic);
+      const response = await fetchMockQuestions(topic);
       setQuestions(response.questions);
       setQuestion(response.questions[0]);
       setErrorMessage("");
@@ -133,12 +133,10 @@ const Interview = () => {
       const newReport = {
         report: report.responses,
         user_id: cookies.userData.id,
-        topic: cookies.topic[0],
       };
 
-      setCookies("component", "interview");
-      console.log("report", newReport);
-      await get_report(newReport);
+      setCookies("component", "full");
+      await get_report_mock(newReport);
       exitFullScreen();
       navigate("/feedback");
     } catch (error) {
@@ -283,4 +281,4 @@ const Interview = () => {
   );
 };
 
-export default Interview;
+export default MockInterview;

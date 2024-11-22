@@ -13,6 +13,12 @@ import Test from "./components/Test";
 import FeedBack from "./components/FeedBack";
 import CodeInstruction from "./components/CodeIntruction";
 import McqSubjects from "./components/McqSubjects";
+
+import Result from "./components/Result"
+import MockMcq from "./components/MockMcq";
+import MockCode from "./components/MockCode";
+import MockInterview from "./components/MockInterview";
+import FullMock from "./components/FullMock";
  
 
 import { UserProvider } from "./context/UserContext";
@@ -43,6 +49,11 @@ function App() {
             <Route path="/test" element={<Test />} />
             <Route path="/feedback" element={<FeedBack />} />
             <Route path="/codeInstruction" element={<CodeInstruction />} />
+            <Route path="/result" element={<Result />} />
+            <Route path="/mockmcq" element={<MockMcq />} />
+            <Route path="/mockcoding" element={<MockCode />} />
+            <Route path="/mockInterview" element={<MockInterview />} />
+            <Route path="/mock" element={<FullMock />} />
           </Routes>
           </ComponentProvider>
         </InterviewProvider>

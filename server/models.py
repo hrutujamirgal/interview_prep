@@ -28,7 +28,13 @@ class Interview(Document):
     userId = ReferenceField(User, required=True)
     selectedTopic = StringField(required=True, max_length=50)
     interviewDate = DateTimeField(default=datetime.utcnow)
-    report = FileField(required=True) 
+    report = StringField(required=True)
+
+
+class FullMock(Document):
+    userId = ReferenceField(User, required=True)
+    interviewDate = DateTimeField(default=datetime.utcnow)
+    report = StringField(required=True)
 
 
 class MCQModel(Document):
