@@ -138,10 +138,17 @@ def generate_follow_up():
 
         # Start with a very basic question
         difficulty = "medium"
-        prompt = f"You're an interviewer conducting a technical interview on {topic}. Ask a 5 different {difficulty} question (maximum 15 words) and provide an answer to those questions and give indxing as Question 1 and so on. Give the question and the answer in an object with the index."
-
+        prompt1 = []
+        if topic == 'HR':
+            prompt1.append(f"You're a Hiring Manager taking interview of a Freshers, ask Questions based on HR")
+            
+        else:
+            prompt1.append(f"You're an interviewer conducting a technical interview on {topic}. Ask a 5 different {difficulty} question (maximum 15 words) and provide an answer to those questions and give indxing as Question 1 and so on. Give the question and the answer in an object with the index.")
+        
+        prompt = ''.join(prompt1)
         content = generate_content(prompt)
         return jsonify(content)
+    
 
 
     except Exception as e:
