@@ -27,6 +27,7 @@ generation_config = {
 }
 def calculate_similarity_bert(text1, text2):
     try:
+        bert_model = SentenceTransformer("F:/AI_Project/backend/backend/server/similarity")
         # Encode the texts into BERT embeddings
         embeddings1 = bert_model.encode(text1, convert_to_tensor=True)
         embeddings2 = bert_model.encode(text2, convert_to_tensor=True)

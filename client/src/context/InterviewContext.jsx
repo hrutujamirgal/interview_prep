@@ -156,7 +156,7 @@ export const InterviewProvider = ({ children }) => {
     console.log(url);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'coding_report.pdf'; 
+    a.download = 'interview_report.pdf'; 
     document.body.appendChild(a);
     a.click();
     // Cleanup
