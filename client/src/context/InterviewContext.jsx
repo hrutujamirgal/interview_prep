@@ -33,7 +33,6 @@ export const InterviewProvider = ({ children }) => {
       const dataF = JSON.parse(cleanedString);
 
       if (dataF) { 
-        console.log(dataF)
         return dataF;
       } else {
         notification.error({
@@ -96,11 +95,7 @@ export const InterviewProvider = ({ children }) => {
   };
 
   const uploadAnswer = async (formData) => {
-    for (let pair of formData.entries()) {
-      console.log(pair[0] + ": " + pair[1]);
-    }
     try {
-      console.log("Uploading video:", formData);
       const response = await fetch(`${route}/upload`, {
         method: "POST",
         headers: {
@@ -109,7 +104,6 @@ export const InterviewProvider = ({ children }) => {
         body: formData,
       });
       const data = await response.json();
-      console.log(data)
       if (data) {
         return data.data;
       }
@@ -123,7 +117,6 @@ export const InterviewProvider = ({ children }) => {
   
   const get_report = async(component)=>{
     try {
-      console.log('hre report:', component)
       const response = await fetch(`${route}/get_report`, {
         method: "POST",
         headers: {
@@ -153,7 +146,6 @@ export const InterviewProvider = ({ children }) => {
   
   const download_report = ()=>{
     const url = window.URL.createObjectURL(blob);
-    console.log(url);
     const a = document.createElement('a');
     a.href = url;
     a.download = 'interview_report.pdf'; 

@@ -28,10 +28,18 @@ const Interview = () => {
     setIsLoading(true);
     try {
       const response = await fetchQuestions(topic);
-      setQuestions(response.questions);
-      setQuestion(response.questions[0]);
-      setErrorMessage("");
-      speakQuestion(response.questions[0].question);
+      if (cookies.topic[0] === "HR") {
+        setQuestions(response);
+        console.log("response", response[0]);
+        setQuestion(response[0]);
+        setErrorMessage("");
+        speakQuestion(response[0].question);
+      } else {
+        setQuestions(response.questions);
+        setQuestion(response.questions[0]);
+        setErrorMessage("");
+        speakQuestion(response.questions[0].question);
+      }
     } catch (error) {
       setErrorMessage("Error fetching question.");
     } finally {
@@ -78,11 +86,15 @@ const Interview = () => {
 
         setIsLoading(true);
         try {
-          const resp = await axios.post("http://127.0.0.1:5000/upload", formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          });
+          const resp = await axios.post(
+            "http://127.0.0.1:5000/upload",
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
 
           if (resp.data) {
             setReport((prev) => ({
@@ -182,20 +194,46 @@ const Interview = () => {
     goFullScreen();
   }, [cookies]);
 
- 
   return (
-    <div style={{ backgroundColor: "#eef5fc", minHeight: "100vh", padding: "40px" }}>
-      <Typography variant="h3" align="center" gutterBottom style={{ color: "#003366", marginBottom: "30px" }}>
+    <div
+      style={{
+        backgroundColor: "#eef5fc",
+        minHeight: "100vh",
+        padding: "40px",
+      }}
+    >
+      <Typography
+        variant="h3"
+        align="center"
+        gutterBottom
+        style={{ color: "#003366", marginBottom: "30px" }}
+      >
         Interview for {subjectName}
       </Typography>
 
-      <Typography variant="h5" align="center" gutterBottom style={{ marginBottom: "20px" }}>
+      <Typography
+        variant="h5"
+        align="center"
+        gutterBottom
+        style={{ marginBottom: "20px" }}
+      >
         {question ? question.question : "Get ready for your interview!"}
       </Typography>
 
-      <Grid container spacing={3} justifyContent="center" alignItems="center" style={{ marginBottom: "40px" }}>
+      <Grid
+        container
+        spacing={3}
+        justifyContent="center"
+        alignItems="center"
+        style={{ marginBottom: "40px" }}
+      >
         <Grid item xs={12} sm={isRecording ? 6 : 12}>
-          <div style={{ display: "flex", justifyContent: isRecording ? "flex-start" : "center" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: isRecording ? "flex-start" : "center",
+            }}
+          >
             <img
               src="/person.jpg"
               alt="Avatar"
@@ -251,7 +289,13 @@ const Interview = () => {
             borderRadius: "30px",
           }}
         >
-          {isLoading ? <CircularProgress size={24} style={{ color: "#ffffff" }} /> : question ? "Next Question" : "Start Preparation"}
+          {isLoading ? (
+            <CircularProgress size={24} style={{ color: "#ffffff" }} />
+          ) : question ? (
+            "Next Question"
+          ) : (
+            "Start Preparation"
+          )}
         </Button>
       )}
 
@@ -270,7 +314,13 @@ const Interview = () => {
             borderRadius: "30px",
           }}
         >
-          {isRecording ? "Stop Answering" : isLoading ? <CircularProgress size={24} style={{ color: "#ffffff" }} /> : "Start Answering"}
+          {isRecording ? (
+            "Stop Answering"
+          ) : isLoading ? (
+            <CircularProgress size={24} style={{ color: "#ffffff" }} />
+          ) : (
+            "Start Answering"
+          )}
         </Button>
       )}
 

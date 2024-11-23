@@ -105,8 +105,7 @@ export const ComponentProvider = ({ children }) => {
         throw new Error("Failed to download report");
       }
   
-      const data = await response.json(); // Add parentheses to call json() correctly
-      console.log(data);
+      const data = await response.json(); 
       setMockmcq(data.path);  // Assuming this function stores the report path
       return data.score;
     } catch (e) {
@@ -130,7 +129,6 @@ export const ComponentProvider = ({ children }) => {
 
   const download_mock_component_report= async(topic)=>{
     const mocki = topic === 'mcq' ? mockmcq : mockcoding
-    console.log(mocki)
     try {
       const response = await fetch(`${route}/get_mock_report`, {
         method: "POST",
@@ -189,7 +187,6 @@ export const ComponentProvider = ({ children }) => {
 
   const fetchReport = async (component) => {
     try {
-      console.log(component);
       const response = await fetch(
         `${route}/get_report/${component}/${cookies.userData.id}`,
         {
@@ -201,7 +198,6 @@ export const ComponentProvider = ({ children }) => {
       );
 
       const data = await response.json();
-      console.log(data);
       if (data) {
         return data;
       } else {
@@ -214,7 +210,6 @@ export const ComponentProvider = ({ children }) => {
 
   const submit_coding = async (component) => {
     try {
-      console.log(component);
       const response = await fetch(`${route}/get_coding_report`, {
         method: "POST",
         headers: {
@@ -240,7 +235,6 @@ export const ComponentProvider = ({ children }) => {
 
   const submit_mock_coding = async (component) => {
     try {
-      console.log(component);
       const response = await fetch(`${route}/get_coding_score`, {
         method: "POST",
         headers: {
@@ -266,8 +260,6 @@ export const ComponentProvider = ({ children }) => {
 
   const download = async (name, id) => {
     try {
-      console.log(name, id);
-  
       const response = await fetch(`${route}/get_one_report/${name}/${id}`, {
         method: "GET",
         headers: {
@@ -301,7 +293,6 @@ export const ComponentProvider = ({ children }) => {
 
   const download_coding_report = () => {
     const url = window.URL.createObjectURL(codingBlob);
-    console.log(url);
     const a = document.createElement("a");
     a.href = url;
     a.download = "coding_report.pdf";
@@ -369,7 +360,7 @@ export const ComponentProvider = ({ children }) => {
   
   const download_mock_report = ()=>{
     const url = window.URL.createObjectURL(mockInterview);
-    console.log(url);
+    
     const a = document.createElement('a');
     a.href = url;
     a.download = 'coding_report.pdf'; 
@@ -395,7 +386,6 @@ export const ComponentProvider = ({ children }) => {
       const dataF = JSON.parse(cleanedString);
 
       if (dataF) { 
-        console.log(dataF)
         return dataF;
       } else {
         notification.error({

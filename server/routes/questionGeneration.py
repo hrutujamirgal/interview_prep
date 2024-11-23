@@ -140,7 +140,7 @@ def generate_follow_up():
         difficulty = "medium"
         prompt1 = []
         if topic == 'HR':
-            prompt1.append(f"You're a Hiring Manager taking interview of a Freshers, ask Questions based on HR")
+            prompt1.append(f"You're a Hiring Manager taking interview of a Freshers, ask Questions based on HR. Ask a 5 different question (maximum 15 words) and provide an answer to those questions and give indxing as Question 1 and so on. Give the question and the answer in an object with the index.")
             
         else:
             prompt1.append(f"You're an interviewer conducting a technical interview on {topic}. Ask a 5 different {difficulty} question (maximum 15 words) and provide an answer to those questions and give indxing as Question 1 and so on. Give the question and the answer in an object with the index.")
