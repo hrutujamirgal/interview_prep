@@ -5,7 +5,7 @@ from datetime import datetime
 from bson import ObjectId
 from reportlab.pdfgen import canvas
 import os
-from routes.questionGeneration import calculate_correctness
+from routes.questionGeneration import calculate_similarity_bert
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
@@ -267,7 +267,7 @@ def create_pdf_with_reportlab_interview(data, file_path, topic):
         y_position -= 20
 
         # Print answer correctness
-        correct = calculate_correctness(question_data['userAnswer'], question_data['answer'])
+        correct = calculate_similarity_bert(question_data['userAnswer'], question_data['answer'])
         p.drawString(margin, y_position, f"Answer correctness: {correct}")
         y_position -= 20
         

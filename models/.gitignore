@@ -7,3 +7,5 @@ a_sample1.wav
 question-generator/
 ffmpeg-7.1/
 ffmpeg-master-latest-win64-gpl/
+spiece.model
+similarity

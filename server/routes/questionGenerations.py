@@ -1,25 +1,20 @@
 import logging
-import google.generativeai as genai
+import joblib
 from flask import Blueprint,Flask, request, jsonify
 from difflib import SequenceMatcher
 from flask_cors import CORS
 from sentence_transformers import SentenceTransformer, util 
-import os
-from dotenv import load_dotenv
-import re
-
-load_dotenv()
 
 # Enable logging for debugging
 logging.basicConfig(level=logging.DEBUG)
 
-questionGeneration = Blueprint('questionGeneration', __name__)
+questionGeneration = Blueprint('questionGeneration', _name_)
 # API Key for Gemini
-API_KEY = os.getenv('API_KEY') 
-genai.configure(api_key=API_KEY)
+model = joblib.load('F:\Full stack projects\interview_prep\models\spiece.model')
+
 
 # Flask setup
-app = Flask(__name__)
+app = Flask(_name_)
 CORS(app)  # Enable CORS for all routes
 
 # Generation configuration for Gemini model
@@ -32,8 +27,6 @@ generation_config = {
 }
 def calculate_similarity_bert(text1, text2):
     try:
-
-        bert_model = SentenceTransformer("F:/AI_Project/backend/backend/server/similarity")
         # Encode the texts into BERT embeddings
         embeddings1 = bert_model.encode(text1, convert_to_tensor=True)
         embeddings2 = bert_model.encode(text2, convert_to_tensor=True)
@@ -49,10 +42,6 @@ def calculate_similarity_bert(text1, text2):
         raise Exception(f"Error calculating similarity using BERT: {str(e)}")
 
 # Initialize the model
-model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash",
-    generation_config=generation_config,
-)
 
 # Function to call the Gemini API for generating content
 def generate_content(prompt):
@@ -130,42 +119,54 @@ def generate_question():
 def generate_follow_up():
     try:
         data = request.json
+        current_answer = data.get("currentAnswer")
+        follow_up_index = data.get("followUpIndex")
         topic = data.get("topic")
-        
+        current_difficulty = data.get("difficulty", "basic")
 
-        if not topic:
-            return jsonify({"error": "Topic is required."}), 400
+        if not current_answer or follow_up_index is None or not topic:
+            return jsonify({"error": "currentAnswer, followUpIndex, and topic are required."}), 400
 
-        # Start with a very basic question
-        difficulty = "medium"
-        prompt = f"You're an interviewer conducting a technical interview on {topic}. Ask a 5 different {difficulty} question (maximum 15 words) and provide an answer to those questions and give indxing as Question 1 and so on. Give the question and the answer in an object with the index."
+        # Determine the next difficulty level
+        difficulty_levels = ["basic", "intermediate", "advanced"]
+        current_level_index = difficulty_levels.index(current_difficulty)
+        next_difficulty = (
+            difficulty_levels[min(current_level_index + 1, len(difficulty_levels) - 1)]
+        )
 
-        content = generate_content(prompt)
-        return jsonify(content)
+        if current_answer.lower() in ["i don't know", "i am not sure", "no idea"]:
+            follow_up_prompt = f"Generate the next {next_difficulty} question related to {topic} (maximum 15 words) for the interview."
+        else:
+            follow_up_prompt = (
+                f"Generate a {next_difficulty} follow-up question based on the answer: '{current_answer}' (maximum 15 words)."
+            )
 
+        follow_up_content = generate_content(follow_up_prompt)
+
+        # Calculate correctness percentage if applicable
+        correctness_percentage = calculate_correctness(current_answer, follow_up_content)
+
+        if "Answer:" in follow_up_content:
+            next_question, next_answer = follow_up_content.split("Answer:", 1)
+            next_question = enforce_word_limit(next_question.strip(), max_words=15)
+            follow_up_data = {
+                "question": next_question,
+                "correctAnswer": next_answer.strip(),
+                "correctnessPercentage": correctness_percentage,
+                "followUpIndex": follow_up_index + 1,
+                "difficulty": next_difficulty
+            }
+            return jsonify(follow_up_data)
+        else:
+            follow_up_question = enforce_word_limit(follow_up_content.strip(), max_words=15)
+            follow_up_data = {
+                "question": follow_up_question,
+                "correctAnswer": "No answer provided in the follow-up content.",
+                "correctnessPercentage": correctness_percentage,
+                "followUpIndex": follow_up_index + 1,
+                "difficulty": next_difficulty
+            }
+            return jsonify(follow_up_data)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
-
-# Route to handle follow-up question generation
-@questionGeneration.route('/questions', methods=['POST'])
-def generate_fullI_questions():
-    try:
-        data = request.json
-        topic = data.get("topic")
-        
-        if not topic:
-            return jsonify({"error": "Topic is required."}), 400
-
-        prompt = f"You're an interviewer conducting a technical interview on computer science topics. Ask a 10 different mix question (maximum 15 words) on both technical and HR round and provide an answer to those questions and give indexing as Question 1 and so on. Give the question and the answer in an object with the index."
-
-        content = generate_content(prompt)
-        return jsonify(content)
-
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
