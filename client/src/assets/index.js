@@ -2,6 +2,7 @@ import technical_interview from "./technical_interview.jpg"
 import mcq_round from "./mcq_round.jpg"
 import coding from './coding.jpg'
 import hr_round from './HR_interview.jpg'
+import fullMock from './fullmock.jpg'
 
 const index = [
     {
@@ -24,6 +25,11 @@ const index = [
     name:'Coding Round',
     img:coding,
     button:'Start Coding Round'  
+},
+{
+    name:'Full Mock Interview',
+    img:fullMock,
+    button:'Start Full Interview Round'  
 },
 
 ]

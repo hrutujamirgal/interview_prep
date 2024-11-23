@@ -14,6 +14,10 @@ const Index = ()=>{
         navigate("/subjects")
     }
 
+    const handleFullInterview = ()=>{
+        navigate("/mock")
+    }
+
     const handleHR=()=>{
         setCookies('topic', ['HR', '00000'])
         navigate("/instruction")
@@ -84,6 +88,18 @@ const Index = ()=>{
 
             <div className="w-96">
                 <img src={index[3].img} alt="" />
+            </div>
+        </div>
+
+        <div className="m-20 bg-paleBlue p-5 rounded-md flex flex-row">
+            <div className="w-96">
+                <img src={index[4].img} alt="" />
+            </div>
+            <div className="p-10 align-middle ml-9 font-serif">
+            <p className="text-2xl md:text-3xl lg:text-4xl">
+                Start practicing {index[4].name}
+            </p>
+            <Button className="mt-10 text-lg md:text-xl lg:text-2xl p-5 font-serif" onClick={handleFullInterview}>{index[4].button}</Button>
             </div>
         </div>
 

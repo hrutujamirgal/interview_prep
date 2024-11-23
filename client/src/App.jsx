@@ -67,7 +67,7 @@ function LocationWrapper() {
 
   return (
     <>
-      { (location.pathname !== "/interview" && location.pathname !== "/test" && location.pathname !== "/coding") && <Navbar />}
+      { (location.pathname !== "/interview" && location.pathname !== "/test" && location.pathname !== "/coding"&& location.pathname !== "/mockmcq"&& location.pathname !== "/mockcoding") && <Navbar />}
     </>
   );
 }
